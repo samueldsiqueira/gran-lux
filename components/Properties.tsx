@@ -12,6 +12,10 @@ export default function Properties({ selectedItem, onUpdateItem }) {
     );
   }
 
+  const handleNameChange = (e) => {
+    onUpdateItem(selectedItem.uid, { name: e.target.value });
+  };
+
   const handleRotationChange = (e) => {
     onUpdateItem(selectedItem.uid, { rotation: parseInt(e.target.value) });
   };
@@ -36,6 +40,14 @@ export default function Properties({ selectedItem, onUpdateItem }) {
   return (
     <div className="card pad">
       <div className="title">Propriedades</div>
+      <div>
+        <label>Nome</label>
+        <input
+          type="text"
+          value={selectedItem.name || ''}
+          onChange={handleNameChange}
+        />
+      </div>
       <div>
         <label>Rotação</label>
         <input
