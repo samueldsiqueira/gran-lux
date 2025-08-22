@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState, useEffect, useRef } from "react";
 import {
   Stage as KonvaStage,
@@ -15,7 +15,7 @@ import { ICONS } from "../app/fixtures";
 import useImage from "use-image";
 
 const GRID_SIZE = 50;
-const FRONT_OF_STAGE_MARGIN = 1.2;
+const FRONT_OF_STAGE_MARGIN = 50; // Fixed margin in pixels
 
 const FixtureImage = ({
   item,
@@ -25,9 +25,12 @@ const FixtureImage = ({
   onTransformEnd,
   shapeRef,
 }) => {
-  const [image] = useImage(
-    `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ICONS[item.icon])}`,
-  );
+  const iconSource = ICONS[item.icon];
+  const imageUrl = iconSource.startsWith('<svg')
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
+    : iconSource; // If it's not an SVG string, assume it's a path
+
+  const [image] = useImage(imageUrl);
 
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -70,13 +73,12 @@ const Truss = ({
   isSelected,
   onTransformEnd,
   shapeRef,
-  ppu,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
   };
 
-  const width = 7.72 * ppu;
+  const width = 300; // Fixed width
   const height = 10;
 
   return (
@@ -113,7 +115,6 @@ const Item = ({
   isSelected,
   onTransformEnd,
   shapeRef,
-  ppu,
 }) => {
   if (item.id === "truss") {
     return (
@@ -124,7 +125,6 @@ const Item = ({
         isSelected={isSelected}
         onTransformEnd={onTransformEnd}
         shapeRef={shapeRef}
-        ppu={ppu}
       />
     );
   }
@@ -167,8 +167,6 @@ const Stage = React.forwardRef(
         }
       };
     }, []);
-
-    const ppu = size.width / 12;
 
     const grid = [];
     for (let i = 0; i < size.width / GRID_SIZE; i++) {
@@ -223,18 +221,20 @@ const Stage = React.forwardRef(
       e.preventDefault();
       const fixture = JSON.parse(e.dataTransfer.getData("application/json"));
       const container = containerRef.current;
+      if (!container) return;
       const rect = container.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       onDrop(fixture, { x, y });
     };
 
-    const stageWidth = 7.72 * ppu;
-    const stageHeight = 4.72 * ppu;
+    const stageWidth = 515; // Fixed width
+    const stageHeight = 315; // Fixed height
     const stageX = (size.width - stageWidth) / 2;
-    const stageY = (size.height - stageHeight) / 2 - (1.5 * ppu) / 2;
+    const stageY = (size.height - stageHeight) / 2 - 50;
 
-    const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
+    const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN;
+    const frontOfStageHeight = 80;
 
     return (
       <div
@@ -281,7 +281,7 @@ const Stage = React.forwardRef(
               x={stageX}
               y={frontOfStageY}
               width={stageWidth}
-              height={1.5 * ppu}
+              height={frontOfStageHeight}
               stroke="black"
               strokeWidth={1}
               strokeDash={[10, 5]}
@@ -308,7 +308,6 @@ const Stage = React.forwardRef(
                   isSelected={selectedItem?.uid === item.uid}
                   onTransformEnd={handleTransformEnd}
                   shapeRef={shapeRefs.current[item.uid]}
-                  ppu={ppu}
                 />
               );
             })}

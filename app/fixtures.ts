@@ -12,6 +12,14 @@ export const ICONS = {
   ledbar:
     '<svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="11" width="20" height="4" rx="2" fill="#111"/><g><rect x="5" y="12" width="2" height="2" fill="#22c55e"/><rect x="8" y="12" width="2" height="2" fill="#3b82f6"/><rect x="11" y="12" width="2" height="2" fill="#f59e0b"/><rect x="14" y="12" width="2" height="2" fill="#ef4444"/><rect x="17" y="12" width="2" height="2" fill="#06b6d4"/><rect x="20" y="12" width="2" height="2" fill="#a78bfa"/></g></svg>',
   fog: '<svg width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="18" height="12" rx="2" fill="#4a5568"/><rect x="6" y="12" width="14" height="8" rx="2" fill="#2d3748"/><path d="M8 8 Q10 4 12 8 T16 8 T20 8" stroke="#a0aec0" stroke-width="2" fill="none"/></svg>',
+  // New icons from public folder
+  elipsoidal_icon: "/elipsoidal.svg",
+  fresnel_icon: "/fresnel.svg",
+  led_bar_icon: "/led_bar.svg",
+  par_64_icon: "/par_64.svg",
+  par_led_icon: "/par_led.svg",
+  set_light_icon: "/set_light.svg",
+  smoke_machine_icon: "/smoke_machine.svg",
 };
 
 export const FIXTURES = [
@@ -55,5 +63,62 @@ export const FIXTURES = [
     icon: "truss",
     modes: [],
     defaultMode: "",
+  },
+  // New fixtures from public folder images
+  {
+    id: "elipsoidal_light",
+    name: "Luz Elipsoidal",
+    powerW: 750,
+    icon: "elipsoidal_icon",
+    modes: ["1ch"],
+    defaultMode: "1ch",
+  },
+  {
+    id: "fresnel_light",
+    name: "Luz Fresnel",
+    powerW: 650,
+    icon: "fresnel_icon",
+    modes: ["1ch"],
+    defaultMode: "1ch",
+  },
+  {
+    id: "led_bar_fixture",
+    name: "Barra LED",
+    powerW: 150,
+    icon: "led_bar_icon",
+    modes: ["3ch", "6ch", "12ch"],
+    defaultMode: "12ch",
+  },
+  {
+    id: "par_64_fixture",
+    name: "PAR 64",
+    powerW: 1000,
+    icon: "par_64_icon",
+    modes: ["1ch"],
+    defaultMode: "1ch",
+  },
+  {
+    id: "par_led_file_fixture",
+    name: "PAR LED (Arquivo)",
+    powerW: 180,
+    icon: "par_led_icon",
+    modes: ["3ch", "7ch"],
+    defaultMode: "7ch",
+  },
+  {
+    id: "set_light_fixture",
+    name: "Luz de Set",
+    powerW: 300,
+    icon: "set_light_icon",
+    modes: ["1ch"],
+    defaultMode: "1ch",
+  },
+  {
+    id: "smoke_machine_file_fixture",
+    name: "Máquina de Fumaça )",
+    powerW: 1500,
+    icon: "smoke_machine_icon",
+    modes: ["1ch"],
+    defaultMode: "1ch",
   },
 ];

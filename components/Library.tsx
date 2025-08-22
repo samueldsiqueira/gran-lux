@@ -6,9 +6,12 @@ export default function Library({ onAddItem, onRemoveSelected, onAutoPatch }) {
     e.dataTransfer.setData('application/json', JSON.stringify(fixture));
 
     const img = new Image();
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-      ICONS[fixture.icon]
-    )}`;
+    const iconSource = ICONS[fixture.icon];
+    if (iconSource.startsWith('<svg')) {
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`;
+    } else {
+      img.src = iconSource; // Use the image path directly
+    }
     img.width = 26;
     img.height = 26;
     e.dataTransfer.setDragImage(img, 13, 13);
@@ -35,7 +38,14 @@ export default function Library({ onAddItem, onRemoveSelected, onAutoPatch }) {
             draggable="true"
             onDragStart={(e) => handleDragStart(e, fixture)}
           >
-            <div dangerouslySetInnerHTML={{ __html: ICONS[fixture.icon] }} />
+            {(() => {
+              const iconSource = ICONS[fixture.icon];
+              if (iconSource.startsWith('<svg')) {
+                return <div dangerouslySetInnerHTML={{ __html: iconSource }} />;
+              } else {
+                return <img src={iconSource} width="26" height="26" alt={fixture.name} />;
+              }
+            })()}
             <div>
               <div style={{ fontWeight: 600, fontSize: '12px' }}>
                 {fixture.name}
