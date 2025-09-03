@@ -1,13 +1,25 @@
-'use client';
-import { FIXTURES, ICONS } from '../app/fixtures';
+"use client";
+import { FIXTURES, ICONS } from "../app/fixtures";
 
-export default function Library({ onAddItem, onRemoveSelected, onAutoPatch }) {
+interface LibraryProps {
+  onSizeChange: (size: number) => void;
+  onAddItem: (fixture: any) => void;
+  onRemoveSelected: () => void;
+  onAutoPatch: () => void;
+}
+
+export function Library({
+  onSizeChange,
+  onAddItem,
+  onRemoveSelected,
+  onAutoPatch,
+}: LibraryProps) {
   const handleDragStart = (e, fixture) => {
-    e.dataTransfer.setData('application/json', JSON.stringify(fixture));
+    e.dataTransfer.setData("application/json", JSON.stringify(fixture));
 
     const img = new Image();
     const iconSource = ICONS[fixture.icon];
-    if (iconSource.startsWith('<svg')) {
+    if (iconSource.startsWith("<svg")) {
       img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`;
     } else {
       img.src = iconSource; // Use the image path directly
@@ -28,6 +40,17 @@ export default function Library({ onAddItem, onRemoveSelected, onAutoPatch }) {
         <button className="btn danger" onClick={onRemoveSelected}>
           Remover selecionado
         </button>
+        <div className="sep"></div> {/* Separator */}
+        <span className="pill muted">Tamanho do Palco</span>
+        <button className="btn" onClick={() => onSizeChange(800)}>
+          800px
+        </button>
+        <button className="btn" onClick={() => onSizeChange(1400)}>
+          1200px
+        </button>
+        <button className="btn" onClick={() => onSizeChange(2000)}>
+          2400px
+        </button>
       </div>
       <div className="list">
         {FIXTURES.map((fixture) => (
@@ -40,22 +63,27 @@ export default function Library({ onAddItem, onRemoveSelected, onAutoPatch }) {
           >
             {(() => {
               const iconSource = ICONS[fixture.icon];
-              if (iconSource.startsWith('<svg')) {
+              if (iconSource.startsWith("<svg")) {
                 return <div dangerouslySetInnerHTML={{ __html: iconSource }} />;
               } else {
-                return <img src={iconSource} width="26" height="26" alt={fixture.name} />;
+                return (
+                  <img
+                    src={iconSource}
+                    width="26"
+                    height="26"
+                    alt={fixture.name}
+                  />
+                );
               }
             })()}
             <div>
-              <div style={{ fontWeight: 600, fontSize: '12px' }}>
+              <div style={{ fontWeight: 600, fontSize: "12px" }}>
                 {fixture.name}
               </div>
-              <div className="muted" style={{ fontSize: '11px' }}>
-                {fixture.id === 'truss'
-                  ? 'estrutura para pendurar'
-                  : `${fixture.defaultMode} • ${
-                      fixture.powerW || 0
-                    }W`}
+              <div className="muted" style={{ fontSize: "11px" }}>
+                {fixture.id === "truss"
+                  ? "estrutura para pendurar"
+                  : `${fixture.defaultMode} • ${fixture.powerW || 0}W`}
               </div>
             </div>
           </div>

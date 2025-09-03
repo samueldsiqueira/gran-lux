@@ -58,7 +58,7 @@ export const FIXTURES = [
   },
   {
     id: "truss",
-    name: "Barra de luz (Truss - estrutura)",
+    name: "Vara de luz (Truss - estrutura)",
     powerW: 0,
     icon: "truss",
     modes: [],

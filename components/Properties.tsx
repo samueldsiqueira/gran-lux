@@ -1,5 +1,7 @@
 'use client';
 
+import { ICONS } from '../app/fixtures';
+
 const PPU = 100;
 
 export default function Properties({ selectedItem, onUpdateItem }) {
@@ -59,6 +61,54 @@ export default function Properties({ selectedItem, onUpdateItem }) {
         />
         <span>{selectedItem.rotation || 0}°</span>
       </div>
+
+      {selectedItem.id !== 'truss' && (
+        <>
+          <div>
+            <label>Potência (W)</label>
+            <input
+              type="number"
+              value={selectedItem.powerW || 0}
+              onChange={(e) => onUpdateItem(selectedItem.uid, { powerW: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+          <div>
+            <label>Ícone</label>
+            <select
+              value={selectedItem.icon}
+              onChange={(e) => onUpdateItem(selectedItem.uid, { icon: e.target.value })}
+            >
+              {Object.keys(ICONS).map((iconKey) => (
+                <option key={iconKey} value={iconKey}>
+                  {iconKey}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Modos (separados por vírgula)</label>
+            <input
+              type="text"
+              value={selectedItem.modes?.join(', ') || ''}
+              onChange={(e) => onUpdateItem(selectedItem.uid, { modes: e.target.value.split(',').map(s => s.trim()) })}
+            />
+          </div>
+          <div>
+            <label>Modo Padrão</label>
+            <select
+              value={selectedItem.defaultMode}
+              onChange={(e) => onUpdateItem(selectedItem.uid, { defaultMode: e.target.value })}
+            >
+              {selectedItem.modes?.map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+
       <div>
         <label>Largura (px)</label>
         <input

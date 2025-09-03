@@ -1,0 +1,7 @@
+  77 |               onChange={(e) => onUpdateItem(selectedItem.uid, { icon: e.target.value })}
+  78 |             >
+> 79 |               {Object.keys(ICONS).map((iconKey) => (
+     |                            ^
+  80 |                 <option key={iconKey} value={iconKey}>
+  81 |                   {iconKey}
+  82 |                 </option>

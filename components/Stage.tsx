@@ -1,5 +1,6 @@
-'use client';
+"use client";
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from 'react-dom/client';
 import {
   Stage as KonvaStage,
   Layer,
@@ -15,7 +16,52 @@ import { ICONS } from "../app/fixtures";
 import useImage from "use-image";
 
 const GRID_SIZE = 50;
-const FRONT_OF_STAGE_MARGIN = 50; // Fixed margin in pixels
+const FRONT_OF_STAGE_MARGIN = 1.2;
+
+const KonvaReactIcon = ({ IconComponent, width, height, stroke, strokeWidth, isSelected }) => {
+  const [image, setImage] = useState(null);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    document.body.appendChild(container);
+    containerRef.current = container;
+
+    const root = ReactDOM.createRoot(container);
+    root.render(React.createElement(IconComponent, { size: width }));
+
+    const svgElement = container.querySelector('svg');
+    if (svgElement) {
+      const svgString = new XMLSerializer().serializeToString(svgElement);
+      const imageUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+
+      const img = new window.Image();
+      img.src = imageUrl;
+      img.onload = () => {
+        setImage(img);
+      };
+    }
+
+    return () => {
+      root.unmount();
+      if (containerRef.current) {
+        document.body.removeChild(containerRef.current);
+      }
+    };
+  }, [IconComponent, width]);
+
+  return (
+    <Image
+      image={image}
+      width={width}
+      height={height}
+      stroke={isSelected ? stroke : null}
+      strokeWidth={isSelected ? strokeWidth : 0}
+    />
+  );
+};
 
 const FixtureImage = ({
   item,
@@ -25,45 +71,84 @@ const FixtureImage = ({
   onTransformEnd,
   shapeRef,
 }) => {
-  const iconSource = ICONS[item.icon];
-  const imageUrl = iconSource.startsWith('<svg')
-    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
-    : iconSource; // If it's not an SVG string, assume it's a path
-
-  const [image] = useImage(imageUrl);
-
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
   };
 
-  return (
-    <Group
-      ref={shapeRef}
-      id={item.uid}
-      x={item.x}
-      y={item.y}
-      draggable
-      onDragEnd={handleDragEnd}
-      onMouseDown={(e) => {
-        e.cancelBubble = true;
-        onSelectItem(item.uid);
-      }}
-      onTransformEnd={() => onTransformEnd(shapeRef.current)}
-      rotation={item.rotation}
-      scaleX={item.scaleX || 1}
-      scaleY={item.scaleY || 1}
-      offsetX={13}
-      offsetY={13}
-    >
-      <Image
-        image={image}
-        width={26}
-        height={26}
-        stroke={isSelected ? "#0ea5e9" : null}
-        strokeWidth={isSelected ? 2 : 0}
-      />
-    </Group>
-  );
+  if (item.componentIcon) {
+    if (typeof item.componentIcon !== 'function' && typeof item.componentIcon !== 'object' && item.componentIcon !== null) {
+      return null;
+    }
+    return (
+      <Group
+        ref={shapeRef}
+        id={item.uid}
+        x={item.x}
+        y={item.y}
+        draggable
+        onDragEnd={handleDragEnd}
+        onMouseDown={(e) => {
+          e.cancelBubble = true;
+          onSelectItem(item.uid);
+        }}
+        onTransformEnd={() => onTransformEnd(shapeRef.current)}
+        rotation={item.rotation}
+        scaleX={item.scaleX || 1}
+        scaleY={item.scaleY || 1}
+        offsetX={13}
+        offsetY={13}
+      >
+        <KonvaReactIcon
+          IconComponent={item.componentIcon}
+          width={26}
+          height={26}
+          stroke="#0ea5e9"
+          strokeWidth={2}
+          isSelected={isSelected}
+        />
+      </Group>
+    );
+  } else {
+    if (!item.icon) {
+      return null;
+    }
+
+    const iconSource = ICONS[item.icon];
+    const imageUrl = iconSource.startsWith('<svg')
+      ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
+      : iconSource;
+
+    const [image] = useImage(imageUrl);
+
+    return (
+      <Group
+        ref={shapeRef}
+        id={item.uid}
+        x={item.x}
+        y={item.y}
+        draggable
+        onDragEnd={handleDragEnd}
+        onMouseDown={(e) => {
+          e.cancelBubble = true;
+          onSelectItem(item.uid);
+        }}
+        onTransformEnd={() => onTransformEnd(shapeRef.current)}
+        rotation={item.rotation}
+        scaleX={item.scaleX || 1}
+        scaleY={item.scaleY || 1}
+        offsetX={13}
+        offsetY={13}
+      >
+        <Image
+          image={image}
+          width={26}
+          height={26}
+          stroke={isSelected ? "#0ea5e9" : null}
+          strokeWidth={isSelected ? 2 : 0}
+        />
+      </Group>
+    );
+  }
 };
 
 const Truss = ({
@@ -73,12 +158,13 @@ const Truss = ({
   isSelected,
   onTransformEnd,
   shapeRef,
+  ppu,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
   };
 
-  const width = 300; // Fixed width
+  const width = 7.72 * ppu;
   const height = 10;
 
   return (
@@ -115,6 +201,7 @@ const Item = ({
   isSelected,
   onTransformEnd,
   shapeRef,
+  ppu,
 }) => {
   if (item.id === "truss") {
     return (
@@ -125,6 +212,7 @@ const Item = ({
         isSelected={isSelected}
         onTransformEnd={onTransformEnd}
         shapeRef={shapeRef}
+        ppu={ppu}
       />
     );
   }
@@ -142,48 +230,32 @@ const Item = ({
 
 const Stage = React.forwardRef(
   (
-    { items, onDragEnd, onSelectItem, selectedItem, onUpdateItem, onDrop },
+    { items, onDragEnd, onSelectItem, selectedItem, onUpdateItem, onDrop, width, height },
     ref,
   ) => {
     const containerRef = useRef(null);
-    const [size, setSize] = useState({ width: 0, height: 0 });
     const trRef = React.useRef();
     const shapeRefs = React.useRef({});
+    const layerRef = React.useRef(null);
 
-    useEffect(() => {
-      const observer = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        setSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
-      });
-      if (containerRef.current) {
-        observer.observe(containerRef.current);
-      }
-      return () => {
-        if (containerRef.current) {
-          observer.unobserve(containerRef.current);
-        }
-      };
-    }, []);
+    const ppu = width / 12;
 
     const grid = [];
-    for (let i = 0; i < size.width / GRID_SIZE; i++) {
+    for (let i = 0; i < width / GRID_SIZE; i++) {
       grid.push(
         <Line
           key={`v-${i}`}
-          points={[i * GRID_SIZE, 0, i * GRID_SIZE, size.height]}
+          points={[i * GRID_SIZE, 0, i * GRID_SIZE, height]}
           stroke="#e5e7eb"
           strokeWidth={1}
         />,
       );
     }
-    for (let i = 0; i < size.height / GRID_SIZE; i++) {
+    for (let i = 0; i < height / GRID_SIZE; i++) {
       grid.push(
         <Line
           key={`h-${i}`}
-          points={[0, i * GRID_SIZE, size.width, i * GRID_SIZE]}
+          points={[0, i * GRID_SIZE, width, i * GRID_SIZE]}
           stroke="#e5e7eb"
           strokeWidth={1}
         />,
@@ -221,36 +293,34 @@ const Stage = React.forwardRef(
       e.preventDefault();
       const fixture = JSON.parse(e.dataTransfer.getData("application/json"));
       const container = containerRef.current;
-      if (!container) return;
       const rect = container.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       onDrop(fixture, { x, y });
     };
 
-    const stageWidth = 515; // Fixed width
-    const stageHeight = 315; // Fixed height
-    const stageX = (size.width - stageWidth) / 2;
-    const stageY = (size.height - stageHeight) / 2 - 50;
+    const stageWidth = 7.72 * ppu;
+    const stageHeight = 4.72 * ppu;
+    const stageX = (width - stageWidth) / 2;
+    const stageY = (height - stageHeight) / 2 - (1.5 * ppu) / 2;
 
-    const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN;
-    const frontOfStageHeight = 80;
+    const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
 
     return (
       <div
         className="card pad"
         ref={containerRef}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: width, height: height, margin: "auto" }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
-        <KonvaStage ref={ref} width={size.width} height={size.height}>
-          <Layer>
+        <KonvaStage ref={ref} width={width} height={height}>
+          <Layer ref={layerRef}>
             <Rect
               x={0}
               y={0}
-              width={size.width}
-              height={size.height}
+              width={width}
+              height={height}
               fill="#f1f5f9"
               onMouseDown={() => onSelectItem(null)}
             />
@@ -281,7 +351,7 @@ const Stage = React.forwardRef(
               x={stageX}
               y={frontOfStageY}
               width={stageWidth}
-              height={frontOfStageHeight}
+              height={1.5 * ppu}
               stroke="black"
               strokeWidth={1}
               strokeDash={[10, 5]}
@@ -308,6 +378,7 @@ const Stage = React.forwardRef(
                   isSelected={selectedItem?.uid === item.uid}
                   onTransformEnd={handleTransformEnd}
                   shapeRef={shapeRefs.current[item.uid]}
+                  ppu={ppu}
                 />
               );
             })}

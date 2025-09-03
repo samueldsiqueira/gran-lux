@@ -2,7 +2,7 @@
 
 import React from 'react';
 import TopBar from '../components/TopBar';
-import Library from '../components/Library';
+import { Library } from '../components/Library';
 import Properties from '../components/Properties';
 import dynamic from 'next/dynamic';
 import { useState, useRef, useEffect } from 'react';
@@ -20,6 +20,16 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [clipboard, setClipboard] = useState(null);
   const stageRef = useRef(null);
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setStageSize({ width: 1200, height: 1200 / (16 / 9) });
+  }, []);
+
+  const handleSizeChange = (newWidth) => {
+    const newHeight = newWidth / (16 / 9);
+    setStageSize({ width: newWidth, height: newHeight });
+  };
 
   const getNextFixtureNumber = () => {
     const numbers = items.filter(item => item.number).map(item => item.number);
@@ -322,7 +332,7 @@ export default function Home() {
         '</b> • Potência total: <b>' +
         (totalPower() / 1000).toFixed(2) +
         ' kW</b> • Universos DMX: '
-        + 
+        +
         (universosList() || '—') + 
         '</p><h2>Patch DMX</h2><table><thead><tr><th>Nº</th><th>ID</th><th>Tipo</th><th>Modo</th><th>Universe</th><th>Endereço</th><th>Canais</th><th>W</th></tr></thead><tbody>' + 
         patchRows +
@@ -362,7 +372,7 @@ export default function Home() {
         onPrintRider={handlePrintRider}
       />
       <div className="wrap">
-        <Library onAddItem={handleAddItem} onRemoveSelected={handleRemoveSelected} onAutoPatch={handleAutoPatch} />
+        <Library onAddItem={handleAddItem} onRemoveSelected={handleRemoveSelected} onAutoPatch={handleAutoPatch} onSizeChange={handleSizeChange} />
         <Stage
           ref={stageRef}
           items={items}
@@ -371,6 +381,8 @@ export default function Home() {
           onDrop={handleDrop}
           selectedItem={selectedItem}
           onUpdateItem={handleUpdateItem}
+          width={stageSize.width}
+          height={stageSize.height}
         />
         <Properties selectedItem={selectedItem} onUpdateItem={handleUpdateItem} />
       </div>
