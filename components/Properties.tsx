@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { ICONS } from '../app/fixtures';
+import { ICONS } from "../app/fixtures";
 
 const PPU = 100;
 
@@ -24,20 +24,22 @@ export default function Properties({ selectedItem, onUpdateItem }) {
 
   const handleSizeChange = (e) => {
     const { name, value } = e.target;
-    const originalWidth = selectedItem.id === 'truss' ? 7.72 * PPU : 26;
-    const originalHeight = selectedItem.id === 'truss' ? 10 : 26;
+    const originalWidth = selectedItem.id === "vara" ? 7.72 * PPU : 26;
+    const originalHeight = selectedItem.id === "vara" ? 10 : 26;
 
-    if (name === 'width') {
+    if (name === "width") {
       const newScaleX = parseFloat(value) / originalWidth;
       onUpdateItem(selectedItem.uid, { scaleX: newScaleX });
-    } else if (name === 'height') {
+    } else if (name === "height") {
       const newScaleY = parseFloat(value) / originalHeight;
       onUpdateItem(selectedItem.uid, { scaleY: newScaleY });
     }
   };
 
-  const width = (selectedItem.id === 'truss' ? 7.72 * PPU : 26) * (selectedItem.scaleX || 1);
-  const height = (selectedItem.id === 'truss' ? 10 : 26) * (selectedItem.scaleY || 1);
+  const width =
+    (selectedItem.id === "vara" ? 7.72 * PPU : 26) * (selectedItem.scaleX || 1);
+  const height =
+    (selectedItem.id === "vara" ? 10 : 26) * (selectedItem.scaleY || 1);
 
   return (
     <div className="card pad">
@@ -46,7 +48,7 @@ export default function Properties({ selectedItem, onUpdateItem }) {
         <label>Nome</label>
         <input
           type="text"
-          value={selectedItem.name || ''}
+          value={selectedItem.name || ""}
           onChange={handleNameChange}
         />
       </div>
@@ -62,21 +64,27 @@ export default function Properties({ selectedItem, onUpdateItem }) {
         <span>{selectedItem.rotation || 0}°</span>
       </div>
 
-      {selectedItem.id !== 'truss' && (
+      {selectedItem.id !== "vara" && (
         <>
           <div>
             <label>Potência (W)</label>
             <input
               type="number"
               value={selectedItem.powerW || 0}
-              onChange={(e) => onUpdateItem(selectedItem.uid, { powerW: parseInt(e.target.value) || 0 })}
+              onChange={(e) =>
+                onUpdateItem(selectedItem.uid, {
+                  powerW: parseInt(e.target.value) || 0,
+                })
+              }
             />
           </div>
           <div>
             <label>Ícone</label>
             <select
               value={selectedItem.icon}
-              onChange={(e) => onUpdateItem(selectedItem.uid, { icon: e.target.value })}
+              onChange={(e) =>
+                onUpdateItem(selectedItem.uid, { icon: e.target.value })
+              }
             >
               {Object.keys(ICONS).map((iconKey) => (
                 <option key={iconKey} value={iconKey}>
@@ -89,15 +97,21 @@ export default function Properties({ selectedItem, onUpdateItem }) {
             <label>Modos (separados por vírgula)</label>
             <input
               type="text"
-              value={selectedItem.modes?.join(', ') || ''}
-              onChange={(e) => onUpdateItem(selectedItem.uid, { modes: e.target.value.split(',').map(s => s.trim()) })}
+              value={selectedItem.modes?.join(", ") || ""}
+              onChange={(e) =>
+                onUpdateItem(selectedItem.uid, {
+                  modes: e.target.value.split(",").map((s) => s.trim()),
+                })
+              }
             />
           </div>
           <div>
             <label>Modo Padrão</label>
             <select
               value={selectedItem.defaultMode}
-              onChange={(e) => onUpdateItem(selectedItem.uid, { defaultMode: e.target.value })}
+              onChange={(e) =>
+                onUpdateItem(selectedItem.uid, { defaultMode: e.target.value })
+              }
             >
               {selectedItem.modes?.map((mode) => (
                 <option key={mode} value={mode}>

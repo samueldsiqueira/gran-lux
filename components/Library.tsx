@@ -81,7 +81,7 @@ export function Library({
                 {fixture.name}
               </div>
               <div className="muted" style={{ fontSize: "11px" }}>
-                {fixture.id === "truss"
+                {fixture.id === "vara"
                   ? "estrutura para pendurar"
                   : `${fixture.defaultMode} • ${fixture.powerW || 0}W`}
               </div>

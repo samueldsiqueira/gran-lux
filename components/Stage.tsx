@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import ReactDOM from 'react-dom/client';
+import ReactDOM from "react-dom/client";
 import {
   Stage as KonvaStage,
   Layer,
@@ -18,21 +18,28 @@ import useImage from "use-image";
 const GRID_SIZE = 50;
 const FRONT_OF_STAGE_MARGIN = 1.2;
 
-const KonvaReactIcon = ({ IconComponent, width, height, stroke, strokeWidth, isSelected }) => {
+const KonvaReactIcon = ({
+  IconComponent,
+  width,
+  height,
+  stroke,
+  strokeWidth,
+  isSelected,
+}) => {
   const [image, setImage] = useState(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
     document.body.appendChild(container);
     containerRef.current = container;
 
     const root = ReactDOM.createRoot(container);
     root.render(React.createElement(IconComponent, { size: width }));
 
-    const svgElement = container.querySelector('svg');
+    const svgElement = container.querySelector("svg");
     if (svgElement) {
       const svgString = new XMLSerializer().serializeToString(svgElement);
       const imageUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
@@ -77,7 +84,11 @@ const FixtureImage = ({
   };
 
   if (item.componentIcon) {
-    if (typeof item.componentIcon !== 'function' && typeof item.componentIcon !== 'object' && item.componentIcon !== null) {
+    if (
+      typeof item.componentIcon !== "function" &&
+      typeof item.componentIcon !== "object" &&
+      item.componentIcon !== null
+    ) {
       return null;
     }
     return (
@@ -96,8 +107,8 @@ const FixtureImage = ({
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
-        offsetX={13}
-        offsetY={13}
+        offsetX={26 / 2}
+        offsetY={26 / 2}
         zIndex={zIndex}
       >
         <KonvaReactIcon
@@ -116,11 +127,20 @@ const FixtureImage = ({
     }
 
     const iconSource = ICONS[item.icon];
-    const imageUrl = iconSource.startsWith('<svg')
+    const imageUrl = iconSource.startsWith("<svg")
       ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
       : iconSource;
 
-    const [image] = useImage(imageUrl);
+    const [image, status] = useImage(imageUrl);
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    useEffect(() => {
+      if (status === "loaded") {
+        setImageLoaded(true);
+      } else if (status === "loading" || status === "failed") {
+        setImageLoaded(false);
+      }
+    }, [status]);
 
     return (
       <Group
@@ -138,24 +158,43 @@ const FixtureImage = ({
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
-        offsetX={13}
-        offsetY={13}
+        offsetX={26 / 2}
+        offsetY={26 / 2}
         zIndex={zIndex}
       >
-        <Image
-          key={imageUrl} // Add key to force re-render if imageUrl changes
-          image={image}
-          width={26}
-          height={26}
-          stroke={isSelected ? "#0ea5e9" : null}
-          strokeWidth={isSelected ? 2 : 0}
-        />
+        {imageLoaded ? (
+          <Image
+            key={imageUrl} // Add key to force re-render if imageUrl changes
+            image={image}
+            width={26}
+            height={26}
+            stroke={isSelected ? "#0ea5e9" : null}
+            strokeWidth={2}
+          />
+        ) : (
+          <Rect
+            width={26}
+            height={26}
+            fill="red"
+            stroke="black"
+            strokeWidth={1}
+          />
+        )}
+        {!imageLoaded && (
+          <Text
+            text="Error"
+            fontSize={10}
+            fill="white"
+            x={26 / 2 - 15}
+            y={26 / 2 - 5}
+          />
+        )}
       </Group>
     );
   }
 };
 
-const Truss = ({
+const Vara = ({
   item,
   onDragEnd,
   onSelectItem,
@@ -211,9 +250,9 @@ const Item = ({
 }) => {
   const zIndex = item.id === "led_bar_fixture" ? 1 : 100;
 
-  if (item.id === "truss") {
+  if (item.id === "vara") {
     return (
-      <Truss
+      <Vara
         item={item}
         onDragEnd={onDragEnd}
         onSelectItem={onSelectItem}
@@ -239,7 +278,16 @@ const Item = ({
 
 const Stage = React.forwardRef(
   (
-    { items, onDragEnd, onSelectItem, selectedItem, onUpdateItem, onDrop, width, height },
+    {
+      items,
+      onDragEnd,
+      onSelectItem,
+      selectedItem,
+      onUpdateItem,
+      onDrop,
+      width,
+      height,
+    },
     ref,
   ) => {
     const containerRef = useRef(null);
