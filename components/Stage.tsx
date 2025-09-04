@@ -70,6 +70,7 @@ const FixtureImage = ({
   isSelected,
   onTransformEnd,
   shapeRef,
+  zIndex,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -97,6 +98,7 @@ const FixtureImage = ({
         scaleY={item.scaleY || 1}
         offsetX={13}
         offsetY={13}
+        zIndex={zIndex}
       >
         <KonvaReactIcon
           IconComponent={item.componentIcon}
@@ -138,8 +140,10 @@ const FixtureImage = ({
         scaleY={item.scaleY || 1}
         offsetX={13}
         offsetY={13}
+        zIndex={zIndex}
       >
         <Image
+          key={imageUrl} // Add key to force re-render if imageUrl changes
           image={image}
           width={26}
           height={26}
@@ -159,6 +163,7 @@ const Truss = ({
   onTransformEnd,
   shapeRef,
   ppu,
+  zIndex,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -190,6 +195,7 @@ const Truss = ({
       scaleY={item.scaleY || 1}
       offsetX={width / 2}
       offsetY={height / 2}
+      zIndex={zIndex}
     />
   );
 };
@@ -203,6 +209,8 @@ const Item = ({
   shapeRef,
   ppu,
 }) => {
+  const zIndex = item.id === "led_bar_fixture" ? 1 : 100;
+
   if (item.id === "truss") {
     return (
       <Truss
@@ -224,6 +232,7 @@ const Item = ({
       isSelected={isSelected}
       onTransformEnd={onTransformEnd}
       shapeRef={shapeRef}
+      zIndex={zIndex}
     />
   );
 };
@@ -323,6 +332,7 @@ const Stage = React.forwardRef(
               height={height}
               fill="#f1f5f9"
               onMouseDown={() => onSelectItem(null)}
+              zIndex={0}
             />
 
             {/* Grid */}
