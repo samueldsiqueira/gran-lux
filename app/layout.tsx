@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "LumiRider Pro",
-  description: "Rider Técnico (MVP+)",
+  description: "Rider Técnico para Iluminação",
 };
 
 export default function RootLayout({
