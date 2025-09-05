@@ -4,7 +4,7 @@ import { ICONS } from "../app/fixtures";
 
 const PPU = 100;
 
-export default function Properties({ selectedItem, onUpdateItem }) {
+export default function Properties({ selectedItem, onUpdateItem, onSendToBack }) {
   if (!selectedItem) {
     return (
       <div className="card pad">
@@ -140,6 +140,9 @@ export default function Properties({ selectedItem, onUpdateItem }) {
           value={height.toFixed(2)}
           onChange={handleSizeChange}
         />
+      </div>
+      <div>
+        <button onClick={onSendToBack}>Enviar para Trás</button>
       </div>
     </div>
   );

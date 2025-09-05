@@ -77,7 +77,6 @@ const FixtureImage = ({
   isSelected,
   onTransformEnd,
   shapeRef,
-  zIndex,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -109,7 +108,6 @@ const FixtureImage = ({
         scaleY={item.scaleY || 1}
         offsetX={26 / 2}
         offsetY={26 / 2}
-        zIndex={zIndex}
       >
         <KonvaReactIcon
           IconComponent={item.componentIcon}
@@ -160,7 +158,6 @@ const FixtureImage = ({
         scaleY={item.scaleY || 1}
         offsetX={26 / 2}
         offsetY={26 / 2}
-        zIndex={zIndex}
       >
         {imageLoaded ? (
           <Image
@@ -202,7 +199,6 @@ const Vara = ({
   onTransformEnd,
   shapeRef,
   ppu,
-  zIndex,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -234,7 +230,6 @@ const Vara = ({
       scaleY={item.scaleY || 1}
       offsetX={width / 2}
       offsetY={height / 2}
-      zIndex={zIndex}
     />
   );
 };
@@ -248,8 +243,6 @@ const Item = ({
   shapeRef,
   ppu,
 }) => {
-  const zIndex = item.id === "led_bar_fixture" ? 1 : 100;
-
   if (item.id === "vara") {
     return (
       <Vara
@@ -271,7 +264,6 @@ const Item = ({
       isSelected={isSelected}
       onTransformEnd={onTransformEnd}
       shapeRef={shapeRef}
-      zIndex={zIndex}
     />
   );
 };
@@ -280,6 +272,7 @@ const Stage = React.forwardRef(
   (
     {
       items,
+      title,
       onDragEnd,
       onSelectItem,
       selectedItem,
@@ -363,6 +356,16 @@ const Stage = React.forwardRef(
 
     const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
 
+    const sortedItems = [...items].sort((a, b) => {
+      if (a.id === 'vara' && b.id !== 'vara') {
+        return 1;
+      }
+      if (a.id !== 'vara' && b.id === 'vara') {
+        return -1;
+      }
+      return 0;
+    });
+
     return (
       <div
         className="card pad"
@@ -380,11 +383,19 @@ const Stage = React.forwardRef(
               height={height}
               fill="#f1f5f9"
               onMouseDown={() => onSelectItem(null)}
-              zIndex={0}
             />
 
             {/* Grid */}
             {grid}
+
+            {/* Title */}
+            <Text
+              text={title}
+              x={10}
+              y={10}
+              fontSize={24}
+              fontStyle="bold"
+            />
 
             {/* Stage Plan */}
             <Rect
@@ -424,7 +435,7 @@ const Stage = React.forwardRef(
             />
 
             {/* Items */}
-            {items.map((item) => {
+            {sortedItems.map((item) => {
               shapeRefs.current[item.uid] =
                 shapeRefs.current[item.uid] || React.createRef();
               return (

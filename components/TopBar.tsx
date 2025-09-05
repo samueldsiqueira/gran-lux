@@ -1,6 +1,8 @@
 "use client";
 
 export default function TopBar({
+  title,
+  onTitleChange,
   onExportJSON,
   onImportJSON,
   onExportCSV,
@@ -26,6 +28,13 @@ export default function TopBar({
   return (
     <div className="top">
       <span className="brand">LumiRider Pro</span>
+      <input
+        type="text"
+        className="title-input"
+        value={title}
+        onChange={(e) => onTitleChange(e.target.value)}
+        placeholder="Nome do Espetáculo"
+      />
 
       <span style={{ marginLeft: "auto" }}></span>
       <button className="btn" onClick={onExportJSON}>

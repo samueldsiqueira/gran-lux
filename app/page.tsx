@@ -21,6 +21,7 @@ export default function Home() {
   const [clipboard, setClipboard] = useState(null);
   const stageRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+  const [title, setTitle] = useState('Meu Espetáculo');
 
   useEffect(() => {
     setStageSize({ width: 1200, height: 1200 / (16 / 9) });
@@ -181,6 +182,13 @@ export default function Home() {
     setSelectedItem(null);
   };
 
+  const handleSendToBack = () => {
+    if (!selectedItem) return;
+    const newItems = items.filter((item) => item.uid !== selectedItem.uid);
+    newItems.unshift(selectedItem);
+    setItems(newItems);
+  };
+
   const handleAutoPatch = () => {
     const nextAddr = new Map();
     const newItems = items.map((item) => {
@@ -207,7 +215,7 @@ export default function Home() {
   };
 
   const handleExportJSON = () => {
-    const data = { items };
+    const data = { items, title };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -217,6 +225,7 @@ export default function Home() {
 
   const handleImportJSON = (data) => {
     setItems(data.items || []);
+    setTitle(data.title || 'Meu Espetáculo');
   };
 
   const handleExportCSV = () => {
@@ -246,58 +255,93 @@ export default function Home() {
     a.click();
   };
 
-  const exportImage = (mimeType, extension) => {
-    const stage = stageRef.current;
-    const stageDataURL = stage.toDataURL();
+    const exportImage = (mimeType, extension, output = 'download') => {
+    return new Promise((resolve, reject) => {
+      const stage = stageRef.current;
+      const pixelRatio = 3;
+      const stageDataURL = stage.toDataURL({ pixelRatio });
 
-    const fixtures = items.filter(item => item.id !== 'truss');
-    const legendHeight = fixtures.length * 30 + 40;
+      const fixtures = items.filter(item => item.id !== 'truss');
+      const itemsPerColumn = 10;
+      const columnWidth = 300; // Adjust as needed
+      const numRows = Math.min(fixtures.length, itemsPerColumn);
+      const legendHeight = numRows * 30 + 40;
 
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
 
-    const stageImage = new window.Image();
-    stageImage.onload = () => {
-      tempCanvas.width = stage.width();
-      tempCanvas.height = stage.height() + legendHeight;
+      const stageImage = new window.Image();
+      stageImage.onload = () => {
+        const stageWidth = stage.width() * pixelRatio;
+        const stageHeight = stage.height() * pixelRatio;
+        tempCanvas.width = stageWidth;
+        tempCanvas.height = stageHeight + legendHeight * pixelRatio;
 
-      tempCtx.fillStyle = '#f1f5f9';
-      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        tempCtx.fillStyle = '#f1f5f9';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-      tempCtx.drawImage(stageImage, 0, 0);
+        tempCtx.drawImage(stageImage, 0, 0);
 
-      tempCtx.fillStyle = 'black';
-      tempCtx.font = '16px sans-serif';
-      tempCtx.fillText('Legenda', 10, stage.height() + 25);
+        tempCtx.fillStyle = 'black';
+        tempCtx.font = (16 * pixelRatio) + 'px sans-serif';
+        tempCtx.fillText(title, 10 * pixelRatio, 25 * pixelRatio);
+        tempCtx.fillText('Legenda', 10 * pixelRatio, stageHeight + 25 * pixelRatio);
 
-      let loadedIcons = 0;
-      if (fixtures.length === 0) {
-        const a = document.createElement('a');
-        a.href = tempCanvas.toDataURL(mimeType);
-        a.download = `mapa.${extension}`;
-        a.click();
-        return;
-      }
-      fixtures.forEach((fixture, index) => {
-        const iconImage = new window.Image();
-        iconImage.onload = () => {
-          tempCtx.font = '14px sans-serif';
-          tempCtx.fillText(`${fixture.number}.`, 10, stage.height() + 55 + index * 30);
-          tempCtx.drawImage(iconImage, 40, stage.height() + 40 + index * 30, 26, 26);
-          tempCtx.font = '12px sans-serif';
-          tempCtx.fillText(fixture.name, 75, stage.height() + 55 + index * 30);
-          loadedIcons++;
-          if (loadedIcons === fixtures.length) {
+        if (fixtures.length === 0) {
+          if (output === 'download') {
             const a = document.createElement('a');
             a.href = tempCanvas.toDataURL(mimeType);
             a.download = `mapa.${extension}`;
             a.click();
+          } else {
+            resolve(tempCanvas.toDataURL(mimeType));
           }
-        };
-        iconImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ICONS[fixture.icon])}`;
-      });
-    };
-    stageImage.src = stageDataURL;
+          return;
+        }
+
+        const iconPromises = fixtures.map(fixture => {
+          return new Promise((resolve, reject) => {
+            const iconImage = new window.Image();
+            iconImage.onload = () => resolve({ iconImage, fixture });
+            iconImage.onerror = reject;
+            const iconUrl = ICONS[fixture.icon];
+            if (iconUrl.startsWith('<')) {
+              iconImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconUrl)}`;
+            } else {
+              iconImage.src = iconUrl;
+            }
+          });
+        });
+
+        Promise.all(iconPromises).then(loadedIcons => {
+          loadedIcons.forEach(({ iconImage, fixture }, index) => {
+            const columnIndex = Math.floor(index / itemsPerColumn);
+            const rowIndex = index % itemsPerColumn;
+            const xPos = (10 + columnIndex * columnWidth) * pixelRatio;
+            const yPos = stageHeight + (40 + rowIndex * 30) * pixelRatio;
+
+            tempCtx.font = (14 * pixelRatio) + 'px sans-serif';
+            tempCtx.fillText(`${fixture.number}.`, xPos, yPos + 15 * pixelRatio);
+            tempCtx.drawImage(iconImage, xPos + 30 * pixelRatio, yPos, 26 * pixelRatio, 26 * pixelRatio);
+            tempCtx.font = (12 * pixelRatio) + 'px sans-serif';
+            tempCtx.fillText(fixture.name, xPos + 65 * pixelRatio, yPos + 15 * pixelRatio);
+          });
+
+          if (output === 'download') {
+            const a = document.createElement('a');
+            a.href = tempCanvas.toDataURL(mimeType);
+            a.download = `mapa.${extension}`;
+            a.click();
+          } else {
+            resolve(tempCanvas.toDataURL(mimeType));
+          }
+        }).catch(error => {
+          console.error("Error loading icons:", error);
+          reject(error);
+        });
+      };
+      stageImage.src = stageDataURL;
+    });
   };
 
   const handleExportPNG = () => {
@@ -308,11 +352,13 @@ export default function Home() {
     exportImage('image/jpeg', 'jpeg');
   };
 
-  const handlePrintRider = () => {
+  const handlePrintRider = async () => {
+    const mapDataURL = await exportImage('image/png', 'png', 'dataURL');
+
     const win = window.open('', '_blank');
     const eq = equipmentSummary();
     const patch = [...items.filter((i) => i.id !== 'truss')].sort((a, b) => a.number - b.number);
-    const style = '<style>body{font-family:system-ui;padding:24px;color:#111} h1{font-size:22px;margin:0 0 8px} h2{font-size:18px;margin:16px 0 8px} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px} th{background:#f3f4f6;text-align:left}</style>';
+    const style = '<style>body{font-family:system-ui;padding:24px;color:#111} h1{font-size:22px;margin:0 0 8px} h2{font-size:18px;margin:16px 0 8px} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px} th{background:#f3f4f6;text-align:left} img{max-width:100%}</style>';
     const eqRows = eq.map((e) => `<tr><td>${e.name}</td><td>${e.qty}</td><td>${e.power} W</td></tr>`).join('');
     const patchRows = patch
       .map(
@@ -321,23 +367,24 @@ export default function Home() {
       )
       .join('');
     const trussCount = items.filter((i) => i.id === 'truss').length;
-    win.document.write(
-      style +
-        '<h1>Rider Técnico – Iluminação</h1>'
-        +
-        '<h2>Equipamentos</h2><table><thead><tr><th>Tipo</th><th>Qtd.</th><th>Potência</th></tr></thead><tbody>'
-        + eqRows +
-        '</tbody></table><p>Truss/Barras: <b>'
-        + trussCount +
-        '</b> • Potência total: <b>' +
-        (totalPower() / 1000).toFixed(2) +
-        ' kW</b> • Universos DMX: '
-        +
-        (universosList() || '—') + 
-        '</p><h2>Patch DMX</h2><table><thead><tr><th>Nº</th><th>ID</th><th>Tipo</th><th>Modo</th><th>Universe</th><th>Endereço</th><th>Canais</th><th>W</th></tr></thead><tbody>' + 
-        patchRows +
-        '</tbody></table>'
-    );
+    
+    let html = style;
+    html += `<h1>Rider Técnico – ${title}</h1>`;
+    html += '<h2>Equipamentos</h2><table><thead><tr><th>Tipo</th><th>Qtd.</th><th>Potência</th></tr></thead><tbody>';
+    html += eqRows;
+    html += '</tbody></table><p>Truss/Barras: <b>';
+    html += trussCount;
+    html += '</b> • Potência total: <b>';
+    html += (totalPower() / 1000).toFixed(2);
+    html += ' kW</b> • Universos DMX: ';
+    html += (universosList() || '—');
+    html += '</p><h2>Patch DMX</h2><table><thead><tr><th>Nº</th><th>ID</th><th>Tipo</th><th>Modo</th><th>Universe</th><th>Endereço</th><th>Canais</th><th>W</th></tr></thead><tbody>';
+    html += patchRows;
+    html += '</tbody></table>';
+    html += '<h2>Mapa de Palco</h2>';
+    html += `<img src="${mapDataURL}" />`;
+
+    win.document.write(html);
     win.document.close();
     win.print();
   };
@@ -364,6 +411,8 @@ export default function Home() {
   return (
     <>
       <TopBar
+        title={title}
+        onTitleChange={setTitle}
         onExportJSON={handleExportJSON}
         onImportJSON={handleImportJSON}
         onExportCSV={handleExportCSV}
@@ -376,6 +425,7 @@ export default function Home() {
         <Stage
           ref={stageRef}
           items={items}
+          title={title}
           onDragEnd={handleDragEnd}
           onSelectItem={handleSelectItem}
           onDrop={handleDrop}
@@ -384,7 +434,7 @@ export default function Home() {
           width={stageSize.width}
           height={stageSize.height}
         />
-        <Properties selectedItem={selectedItem} onUpdateItem={handleUpdateItem} />
+        <Properties selectedItem={selectedItem} onUpdateItem={handleUpdateItem} onSendToBack={handleSendToBack} />
       </div>
     </>
   );
