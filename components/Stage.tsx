@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import ReactDOM from 'react-dom/client';
+import ReactDOM from "react-dom/client";
 import {
   Stage as KonvaStage,
   Layer,
@@ -18,21 +18,28 @@ import useImage from "use-image";
 const GRID_SIZE = 50;
 const FRONT_OF_STAGE_MARGIN = 1.2;
 
-const KonvaReactIcon = ({ IconComponent, width, height, stroke, strokeWidth, isSelected }) => {
+const KonvaReactIcon = ({
+  IconComponent,
+  width,
+  height,
+  stroke,
+  strokeWidth,
+  isSelected,
+}) => {
   const [image, setImage] = useState(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
     document.body.appendChild(container);
     containerRef.current = container;
 
     const root = ReactDOM.createRoot(container);
     root.render(React.createElement(IconComponent, { size: width }));
 
-    const svgElement = container.querySelector('svg');
+    const svgElement = container.querySelector("svg");
     if (svgElement) {
       const svgString = new XMLSerializer().serializeToString(svgElement);
       const imageUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
@@ -76,7 +83,11 @@ const FixtureImage = ({
   };
 
   if (item.componentIcon) {
-    if (typeof item.componentIcon !== 'function' && typeof item.componentIcon !== 'object' && item.componentIcon !== null) {
+    if (
+      typeof item.componentIcon !== "function" &&
+      typeof item.componentIcon !== "object" &&
+      item.componentIcon !== null
+    ) {
       return null;
     }
     return (
@@ -95,8 +106,8 @@ const FixtureImage = ({
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
-        offsetX={13}
-        offsetY={13}
+        offsetX={26 / 2}
+        offsetY={26 / 2}
       >
         <KonvaReactIcon
           IconComponent={item.componentIcon}
@@ -114,11 +125,20 @@ const FixtureImage = ({
     }
 
     const iconSource = ICONS[item.icon];
-    const imageUrl = iconSource.startsWith('<svg')
+    const imageUrl = iconSource.startsWith("<svg")
       ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
       : iconSource;
 
-    const [image] = useImage(imageUrl);
+    const [image, status] = useImage(imageUrl);
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    useEffect(() => {
+      if (status === "loaded") {
+        setImageLoaded(true);
+      } else if (status === "loading" || status === "failed") {
+        setImageLoaded(false);
+      }
+    }, [status]);
 
     return (
       <Group
@@ -136,22 +156,42 @@ const FixtureImage = ({
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
-        offsetX={13}
-        offsetY={13}
+        offsetX={26 / 2}
+        offsetY={26 / 2}
       >
-        <Image
-          image={image}
-          width={26}
-          height={26}
-          stroke={isSelected ? "#0ea5e9" : null}
-          strokeWidth={isSelected ? 2 : 0}
-        />
+        {imageLoaded ? (
+          <Image
+            key={imageUrl} // Add key to force re-render if imageUrl changes
+            image={image}
+            width={26}
+            height={26}
+            stroke={isSelected ? "#0ea5e9" : null}
+            strokeWidth={2}
+          />
+        ) : (
+          <Rect
+            width={26}
+            height={26}
+            fill="red"
+            stroke="black"
+            strokeWidth={1}
+          />
+        )}
+        {!imageLoaded && (
+          <Text
+            text="Error"
+            fontSize={10}
+            fill="white"
+            x={26 / 2 - 15}
+            y={26 / 2 - 5}
+          />
+        )}
       </Group>
     );
   }
 };
 
-const Truss = ({
+const Vara = ({
   item,
   onDragEnd,
   onSelectItem,
@@ -203,9 +243,9 @@ const Item = ({
   shapeRef,
   ppu,
 }) => {
-  if (item.id === "truss") {
+  if (item.id === "vara") {
     return (
-      <Truss
+      <Vara
         item={item}
         onDragEnd={onDragEnd}
         onSelectItem={onSelectItem}
@@ -230,7 +270,18 @@ const Item = ({
 
 const Stage = React.forwardRef(
   (
-    { items, onDragEnd, onSelectItem, selectedItem, onUpdateItem, onDrop, width, height },
+    {
+      items,
+      title,
+      groups,
+      onDragEnd,
+      onSelectItem,
+      selectedItem,
+      onUpdateItem,
+      onDrop,
+      width,
+      height,
+    },
     ref,
   ) => {
     const containerRef = useRef(null);
@@ -306,6 +357,20 @@ const Stage = React.forwardRef(
 
     const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
 
+    const fixtures = items.filter(item => item.id !== 'vara');
+    const varas = items.filter(item => item.id === 'vara');
+
+    const itemsByGroup = (itemsToGroup) => itemsToGroup.reduce((acc, item) => {
+      const groupId = item.groupId || 'ungrouped';
+      if (!acc[groupId]) {
+        acc[groupId] = [];
+      }
+      acc[groupId].push(item);
+      return acc;
+    }, {});
+
+    const fixtureGroups = itemsByGroup(fixtures);
+
     return (
       <div
         className="card pad"
@@ -327,6 +392,15 @@ const Stage = React.forwardRef(
 
             {/* Grid */}
             {grid}
+
+            {/* Title */}
+            <Text
+              text={title}
+              x={10}
+              y={10}
+              fontSize={24}
+              fontStyle="bold"
+            />
 
             {/* Stage Plan */}
             <Rect
@@ -365,8 +439,42 @@ const Stage = React.forwardRef(
               listening={false}
             />
 
-            {/* Items */}
-            {items.map((item) => {
+            {/* Fixture Groups */}
+            {Object.entries(fixtureGroups).map(([groupId, groupItems]) => {
+              const group = groups.find(g => g.id === groupId);
+              return (
+                <Group key={groupId}>
+                  {group && (
+                    <Text
+                      text={group.name}
+                      x={groupItems[0]?.x - 10}
+                      y={groupItems[0]?.y - 30}
+                      fontSize={18}
+                      fontStyle="bold"
+                    />
+                  )}
+                  {groupItems.map((item) => {
+                    shapeRefs.current[item.uid] =
+                      shapeRefs.current[item.uid] || React.createRef();
+                    return (
+                      <Item
+                        key={item.uid}
+                        item={item}
+                        onDragEnd={onDragEnd}
+                        onSelectItem={onSelectItem}
+                        isSelected={selectedItem?.uid === item.uid}
+                        onTransformEnd={handleTransformEnd}
+                        shapeRef={shapeRefs.current[item.uid]}
+                        ppu={ppu}
+                      />
+                    );
+                  })}
+                </Group>
+              );
+            })}
+
+            {/* Varas */}
+            {varas.map((item) => {
               shapeRefs.current[item.uid] =
                 shapeRefs.current[item.uid] || React.createRef();
               return (
@@ -382,6 +490,7 @@ const Stage = React.forwardRef(
                 />
               );
             })}
+
             <Transformer ref={trRef} />
           </Layer>
         </KonvaStage>
