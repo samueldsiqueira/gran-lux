@@ -123,27 +123,7 @@ const FixtureImage = ({
           strokeWidth={2}
           isSelected={isSelected}
         />
-        {item.number && (
-          <>
-            <Circle
-              x={25}
-              y={-25}
-              radius={12}
-              fill="#fff"
-              stroke={item.color || "#111"}
-              strokeWidth={2}
-              listening={false}
-            />
-            <Text
-              text={`${item.markerNumber ?? item.number}`}
-              fontSize={11}
-              fill="#111"
-              x={(item.markerNumber ?? item.number).toString().length === 1 ? 21 : (item.markerNumber ?? item.number).toString().length === 2 ? 18 : 15}
-              y={-29}
-              listening={false}
-            />
-          </>
-        )}
+        
       </Group>
     );
   } else {
@@ -215,27 +195,7 @@ const FixtureImage = ({
             y={50 / 2 - 5}
           />
         )}
-        {item.number && (
-          <>
-            <Circle
-              x={25}
-              y={-25}
-              radius={12}
-              fill="#fff"
-              stroke={item.color || "#111"}
-              strokeWidth={2}
-              listening={false}
-            />
-            <Text
-              text={`${item.markerNumber ?? item.number}`}
-              fontSize={11}
-              fill="#111"
-              x={(item.markerNumber ?? item.number).toString().length === 1 ? 21 : (item.markerNumber ?? item.number).toString().length === 2 ? 18 : 15}
-              y={-29}
-              listening={false}
-            />
-          </>
-        )}
+        
       </Group>
     );
   }
@@ -588,6 +548,21 @@ const Stage = React.forwardRef(
                   ppu={ppu}
                   onDragMove={(e) => onDragMove(item.uid, e.target.x(), e.target.y())}
                 />
+              );
+            })}
+
+            {/* Labels overlay (not rotated with item) */}
+            {fixtures.map((item) => {
+              const labelNum = (item.markerNumber ?? item.number);
+              if (!labelNum) return null;
+              const len = labelNum.toString().length;
+              const textX = item.x + (len === 1 ? 21 : len === 2 ? 18 : 15);
+              const textY = item.y - 29;
+              return (
+                <Group key={`label-${item.uid}`} listening={false}>
+                  <Circle x={item.x + 25} y={item.y - 25} radius={12} fill="#fff" stroke={item.color || "#111"} strokeWidth={2} />
+                  <Text text={`${labelNum}`} fontSize={11} fill="#111" x={textX} y={textY} listening={false} />
+                </Group>
               );
             })}
 
