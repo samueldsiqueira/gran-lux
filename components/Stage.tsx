@@ -16,8 +16,10 @@ import {
 import { ICONS } from "../app/fixtures";
 import useImage from "use-image";
 
-const GRID_SIZE = 50;
+const GRID_SIZE = 25; // denser grid
 const FRONT_OF_STAGE_MARGIN = 1.2;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
 
 const KonvaReactIcon = ({
   IconComponent,
@@ -338,6 +340,8 @@ const Stage = React.forwardRef(
       width,
       height,
       onDragMove,
+      scale = 1,
+      onScaleChange,
     },
     ref,
   ) => {
@@ -345,25 +349,46 @@ const Stage = React.forwardRef(
     const trRef = React.useRef();
     const shapeRefs = React.useRef({});
     const layerRef = React.useRef(null);
+    const [offset, setOffset] = React.useState({ x: 0, y: 0 });
+    const isPanningRef = React.useRef(false);
+    const isSpacePressedRef = React.useRef(false);
+    const lastClientRef = React.useRef<{x:number;y:number}|null>(null);
+
+    React.useEffect(() => {
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.code === 'Space') isSpacePressedRef.current = true;
+      };
+      const onKeyUp = (e: KeyboardEvent) => {
+        if (e.code === 'Space') isSpacePressedRef.current = false;
+      };
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('keyup', onKeyUp);
+      return () => {
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('keyup', onKeyUp);
+      };
+    }, []);
 
     const ppu = width / 12;
 
     const grid = [];
-    for (let i = 0; i < width / GRID_SIZE; i++) {
+    for (let i = 0; i <= Math.ceil(width / GRID_SIZE); i++) {
+      const x = i * GRID_SIZE;
       grid.push(
         <Line
           key={`v-${i}`}
-          points={[i * GRID_SIZE, 0, i * GRID_SIZE, height]}
+          points={[x, 0, x, height]}
           stroke="#e5e7eb"
           strokeWidth={1}
         />,
       );
     }
-    for (let i = 0; i < height / GRID_SIZE; i++) {
+    for (let i = 0; i <= Math.ceil(height / GRID_SIZE); i++) {
+      const y = i * GRID_SIZE;
       grid.push(
         <Line
           key={`h-${i}`}
-          points={[0, i * GRID_SIZE, width, i * GRID_SIZE]}
+          points={[0, y, width, y]}
           stroke="#e5e7eb"
           strokeWidth={1}
         />,
@@ -406,8 +431,8 @@ const Stage = React.forwardRef(
       if (!stage) return;
       const rect = stage.container().getBoundingClientRect();
       const pointerPosition = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: (e.clientX - rect.left - offset.x) / scale,
+        y: (e.clientY - rect.top - offset.y) / scale,
       };
       const target = stage.getIntersection(pointerPosition) || null;
       onDrop(fixture, pointerPosition, target);
@@ -430,17 +455,53 @@ const Stage = React.forwardRef(
         style={{ width: width, height: height, margin: "auto" }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
+        onContextMenu={(e) => e.preventDefault()}
+        onMouseDown={(e) => {
+          // Right or middle button always pans; Space+Left also pans
+          if (e.button === 1 || e.button === 2 || (e.button === 0 && isSpacePressedRef.current)) {
+            isPanningRef.current = true;
+            lastClientRef.current = { x: e.clientX, y: e.clientY };
+          }
+        }}
+        onMouseMove={(e) => {
+          if (!isPanningRef.current || !lastClientRef.current) return;
+          const dx = e.clientX - lastClientRef.current.x;
+          const dy = e.clientY - lastClientRef.current.y;
+          lastClientRef.current = { x: e.clientX, y: e.clientY };
+          setOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+        }}
+        onMouseUp={() => { isPanningRef.current = false; lastClientRef.current = null; }}
+        onMouseLeave={() => { isPanningRef.current = false; lastClientRef.current = null; }}
+        onWheel={(e) => {
+          e.preventDefault();
+          const intensity = e.ctrlKey || e.metaKey ? 1.15 : 1.07;
+          const factor = e.deltaY > 0 ? 1 / intensity : intensity;
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (!rect) return;
+          const sx = e.clientX - rect.left;
+          const sy = e.clientY - rect.top;
+          const wx = (sx - offset.x) / scale;
+          const wy = (sy - offset.y) / scale;
+          let next = scale * factor;
+          next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, next));
+          // keep world point under cursor fixed
+          const nx = sx - wx * next;
+          const ny = sy - wy * next;
+          setOffset({ x: nx, y: ny });
+          if (onScaleChange) onScaleChange(next);
+        }}
       >
         <KonvaStage ref={ref} width={width} height={height}>
           <Layer ref={layerRef}>
-            <Rect
-              x={0}
-              y={0}
-              width={width}
-              height={height}
-              fill="#f1f5f9"
-              onMouseDown={() => onSelectItem(null)}
-            />
+            <Group x={offset.x} y={offset.y} scaleX={scale} scaleY={scale}>
+              <Rect
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+                fill="#f1f5f9"
+                onMouseDown={() => onSelectItem(null)}
+              />
 
             {/* Grid */}
             {grid}
@@ -531,6 +592,7 @@ const Stage = React.forwardRef(
             })}
 
             <Transformer ref={trRef} />
+            </Group>
           </Layer>
         </KonvaStage>
       </div>

@@ -21,6 +21,8 @@ export default function Home() {
   const [clipboard, setClipboard] = useState(null);
   const stageRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+  const [stageScale, setStageScale] = useState(1);
+  const baseStageWidthRef = useRef<number | null>(null);
   const [title, setTitle] = useState('Meu Espetáculo');
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -34,12 +36,19 @@ export default function Home() {
   const VARA_HEIGHT = 10; // px height of vara rectangle
 
   useEffect(() => {
-    setStageSize({ width: 1200, height: 1200 / (16 / 9) });
+    const w = 1200;
+    const h = 1200 / (16 / 9);
+    setStageSize({ width: w, height: h });
+    baseStageWidthRef.current = w;
   }, []);
 
   const handleSizeChange = (newWidth) => {
-    const newHeight = newWidth / (16 / 9);
-    setStageSize({ width: newWidth, height: newHeight });
+    const base = baseStageWidthRef.current || stageSize.width || 1200;
+    const newScale = newWidth / base;
+    setStageScale(newScale);
+    // Keep stage pixel size constante para não criar scroll
+    const newHeight = base / (16 / 9);
+    setStageSize({ width: base, height: newHeight });
   };
 
   const getNextFixtureNumber = () => {
@@ -632,6 +641,8 @@ export default function Home() {
           items={items}
           title={title}
           groups={groups}
+          scale={stageScale}
+          onScaleChange={setStageScale}
           onDragEnd={handleDragEnd}
           onSelectItem={handleSelectItem}
           onDrop={handleDrop}
