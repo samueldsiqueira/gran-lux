@@ -1,3 +1,4 @@
+
 "use client";
 
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -21,10 +22,33 @@ export default function RegisterPage() {
     e.preventDefault();
     // TODO: enviar dados para registro real
     signIn("credentials", { email, password });
+main
   };
 
   return (
     <div className="p-4">
+      <h1 className="text-xl mb-4">Register</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 max-w-sm">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          className="border p-2"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          className="border p-2"
+          required
+        />
+        {error && <p className="text-red-500">{error}</p>}
+        <button type="submit" className="bg-blue-500 text-white p-2">
+          Register
+
       <h1 className="mb-2 text-xl">Registro</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
         <input
@@ -43,6 +67,7 @@ export default function RegisterPage() {
         />
         <button type="submit" className="btn">
           Registrar
+
         </button>
       </form>
     </div>
