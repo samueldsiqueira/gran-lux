@@ -10,11 +10,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "geist": "^1.5.1",
     "konva": "^9.3.22",
     "next": "15.5.0",
+    "next-auth": "^4.24.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next-auth": "^4.24.5",
     "react-konva": "^19.0.7",
     "use-image": "^1.1.4"
   },

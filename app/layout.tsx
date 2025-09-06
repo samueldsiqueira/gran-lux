@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 
 export const metadata: Metadata = {
   title: "LumiRider Pro",
@@ -14,10 +16,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-codex/update-eslint.config.mjs-rules
-
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
         <AuthProvider>{children}</AuthProvider>
       </body>
