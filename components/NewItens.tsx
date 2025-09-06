@@ -334,15 +334,15 @@ export const LightingConsoleIcon = withMemo((props: IconProps) => (
   </Frame>
 ));
 
-export const TrussIcon = withMemo((props: IconProps) => (
-  <Frame id="truss" title={props.title ?? "Espinha / Truss"} {...props}>
+export const varaIcon = withMemo((props: IconProps) => (
+  <Frame id="vara" title={props.title ?? "Espinha / vara"} {...props}>
     <rect
       x={18}
       y={46}
       width={92}
       height={24}
       rx={4}
-      fill={`url(#truss-metal)`}
+      fill={`url(#vara-metal)`}
     />
     <path d="M22 50 l84 16 M22 70 l84 -16 M46 46 v24 M82 46 v24" />
   </Frame>
@@ -417,7 +417,7 @@ export const LumiRiderIconShowcase: React.FC<{ size?: number | string }> = ({
     [FogMachineIcon, "Fog"],
     [LightingConsoleIcon, "Mesa"],
     [DimmerPackIcon, "Dimmer"],
-    [TrussIcon, "Truss"],
+    [varaIcon, "vara"],
     [TBarIcon, "T-Bar"],
     [TripodLowIcon, "Tripé Baixo"],
     [TripodHighIcon, "Tripé Alto"],
