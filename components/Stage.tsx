@@ -8,6 +8,7 @@ import {
   Text,
   Line,
   Image,
+  Circle,
   Arc,
   Transformer,
   Group,
@@ -109,17 +110,38 @@ const FixtureImage = ({
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
-        offsetX={26 / 2}
-        offsetY={26 / 2}
+        offsetX={50 / 2}
+        offsetY={50 / 2}
       >
         <KonvaReactIcon
           IconComponent={item.componentIcon}
-          width={26}
-          height={26}
+          width={50}
+          height={50}
           stroke="#0ea5e9"
           strokeWidth={2}
           isSelected={isSelected}
         />
+        {item.number && (
+          <>
+            <Circle
+              x={25}
+              y={-25}
+              radius={12}
+              fill="#fff"
+              stroke={item.color || "#111"}
+              strokeWidth={2}
+              listening={false}
+            />
+            <Text
+              text={`${item.markerNumber ?? item.number}`}
+              fontSize={11}
+              fill="#111"
+              x={(item.markerNumber ?? item.number).toString().length === 1 ? 21 : (item.markerNumber ?? item.number).toString().length === 2 ? 18 : 15}
+              y={-29}
+              listening={false}
+            />
+          </>
+        )}
       </Group>
     );
   } else {
@@ -147,6 +169,7 @@ const FixtureImage = ({
       <Group
         ref={shapeRef}
         id={item.uid}
+        name={item.id}
         x={item.x}
         y={item.y}
         draggable
@@ -160,22 +183,22 @@ const FixtureImage = ({
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
-        offsetX={26 / 2}
-        offsetY={26 / 2}
+        offsetX={50 / 2}
+        offsetY={50 / 2}
       >
         {imageLoaded ? (
           <Image
             key={imageUrl} // Add key to force re-render if imageUrl changes
             image={image}
-            width={26}
-            height={26}
+            width={50}
+            height={50}
             stroke={isSelected ? "#0ea5e9" : null}
             strokeWidth={2}
           />
         ) : (
           <Rect
-            width={26}
-            height={26}
+            width={50}
+            height={50}
             fill="red"
             stroke="black"
             strokeWidth={1}
@@ -186,9 +209,30 @@ const FixtureImage = ({
             text="Error"
             fontSize={10}
             fill="white"
-            x={26 / 2 - 15}
-            y={26 / 2 - 5}
+            x={50 / 2 - 15}
+            y={50 / 2 - 5}
           />
+        )}
+        {item.number && (
+          <>
+            <Circle
+              x={25}
+              y={-25}
+              radius={12}
+              fill="#fff"
+              stroke={item.color || "#111"}
+              strokeWidth={2}
+              listening={false}
+            />
+            <Text
+              text={`${item.markerNumber ?? item.number}`}
+              fontSize={11}
+              fill="#111"
+              x={(item.markerNumber ?? item.number).toString().length === 1 ? 21 : (item.markerNumber ?? item.number).toString().length === 2 ? 18 : 15}
+              y={-29}
+              listening={false}
+            />
+          </>
         )}
       </Group>
     );

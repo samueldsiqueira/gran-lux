@@ -99,7 +99,7 @@ export default function Home() {
   };
 
   const renumberFixtures = (currentItems) => {
-    const fixtures = currentItems.filter(item => item.id !== 'truss').sort((a, b) => a.number - b.number);
+    const fixtures = currentItems.filter(item => item.id !== 'vara').sort((a, b) => a.number - b.number);
     const fixtureMap = new Map();
     fixtures.forEach((fixture, index) => {
       fixtureMap.set(fixture.uid, index + 1);
@@ -153,7 +153,7 @@ export default function Home() {
         x: clipboard.x + 20,
         y: clipboard.y + 20,
         uid: Math.random().toString(36).substr(2, 9),
-        number: clipboard.id === 'truss' ? null : getNextFixtureNumber(),
+        number: clipboard.id === 'vara' ? null : getNextFixtureNumber(),
       };
       setItems([...items, newItem]);
     }
@@ -189,7 +189,7 @@ export default function Home() {
       universe: 1,
       address: 1,
       channels: channelsFrom(fixture.defaultMode),
-      number: fixture.id === 'truss' ? null : getNextFixtureNumber(),
+      number: fixture.id === 'vara' ? null : getNextFixtureNumber(),
       groupId,
     };
     setItems([...items, newItem]);
@@ -231,7 +231,7 @@ export default function Home() {
       universe: 1,
       address: 1,
       channels: channelsFrom(fixture.defaultMode),
-      number: fixture.id === 'truss' ? null : getNextFixtureNumber(),
+      number: fixture.id === 'vara' ? null : getNextFixtureNumber(),
       connectedTo,
     };
     setItems([...items, newItem]);
@@ -339,6 +339,18 @@ export default function Home() {
     }
   };
 
+  const handleApplyMarkerToGroup = () => {
+    if (!selectedItem || !selectedItem.groupId) return;
+    const { groupId, markerNumber, color } = selectedItem;
+    const updated = items.map((i) => {
+      if (i.groupId === groupId && i.id !== 'vara') {
+        return { ...i, markerNumber, color };
+      }
+      return i;
+    });
+    setItems(updated);
+  };
+
   const handleRemoveSelected = () => {
     if (!selectedItem) return;
     const newItems = items.filter((item) => item.uid !== selectedItem.uid);
@@ -357,7 +369,7 @@ export default function Home() {
   const handleAutoPatch = () => {
     const nextAddr = new Map();
     const newItems = items.map((item) => {
-      if (item.id === 'truss') return item;
+      if (item.id === 'vara') return item;
 
       const u = item.universe || 1;
       if (!nextAddr.has(u)) nextAddr.set(u, 1);
@@ -397,10 +409,10 @@ export default function Home() {
   const handleExportCSV = () => {
     const header = ['Nº', 'ID', 'Tipo', 'Modo', 'Universe', 'Endereço', 'Canais', 'Potência(W)', 'X', 'Y', 'Rot'];
     const rows = items
-      .filter((i) => i.id !== 'truss')
+      .filter((i) => i.id !== 'vara')
       .map((i) =>
         [
-          i.number,
+          i.markerNumber ?? i.number,
           i.uid,
           i.name,
           i.defaultMode,
@@ -427,7 +439,7 @@ export default function Home() {
       const pixelRatio = 3;
       const stageDataURL = stage.toDataURL({ pixelRatio });
 
-      const fixtures = items.filter(item => item.id !== 'truss');
+      const fixtures = items.filter(item => item.id !== 'vara');
       const itemsPerColumn = 10;
       const columnWidth = 300; // Adjust as needed
       const numRows = Math.min(fixtures.length, itemsPerColumn);
@@ -486,9 +498,28 @@ export default function Home() {
             const xPos = (10 + columnIndex * columnWidth) * pixelRatio;
             const yPos = stageHeight + (40 + rowIndex * 30) * pixelRatio;
 
-            tempCtx.font = (14 * pixelRatio) + 'px sans-serif';
-            tempCtx.fillText(`${fixture.number}.`, xPos, yPos + 15 * pixelRatio);
+            // Badge circle with number and color
+            const cx = xPos + 12 * pixelRatio;
+            const cy = yPos + 13 * pixelRatio;
+            const r = 10 * pixelRatio;
+            tempCtx.beginPath();
+            tempCtx.arc(cx, cy, r, 0, Math.PI * 2);
+            tempCtx.fillStyle = '#fff';
+            tempCtx.fill();
+            tempCtx.lineWidth = 2 * pixelRatio;
+            tempCtx.strokeStyle = fixture.color || '#111';
+            tempCtx.stroke();
+
+            tempCtx.fillStyle = '#111';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.font = (12 * pixelRatio) + 'px sans-serif';
+            tempCtx.fillText(`${fixture.markerNumber ?? fixture.number}`, cx, cy);
+
+            // Icon and name
             tempCtx.drawImage(iconImage, xPos + 30 * pixelRatio, yPos, 26 * pixelRatio, 26 * pixelRatio);
+            tempCtx.textAlign = 'left';
+            tempCtx.textBaseline = 'alphabetic';
             tempCtx.font = (12 * pixelRatio) + 'px sans-serif';
             tempCtx.fillText(fixture.name, xPos + 65 * pixelRatio, yPos + 15 * pixelRatio);
           });
@@ -523,7 +554,7 @@ export default function Home() {
 
     const win = window.open('', '_blank');
     const eq = equipmentSummary();
-    const patch = [...items.filter((i) => i.id !== 'truss')].sort((a, b) => a.number - b.number);
+    const patch = [...items.filter((i) => i.id !== 'vara')].sort((a, b) => a.number - b.number);
     const style = '<style>body{font-family:system-ui;padding:24px;color:#111} h1{font-size:22px;margin:0 0 8px} h2{font-size:18px;margin:16px 0 8px} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px} th{background:#f3f4f6;text-align:left} img{max-width:100%}</style>';
     const eqRows = eq.map((e) => `<tr><td>${e.name}</td><td>${e.qty}</td><td>${e.power} W</td></tr>`).join('');
     const patchRows = patch
@@ -532,7 +563,7 @@ export default function Home() {
           `<tr><td>${p.number}</td><td>${p.uid}</td><td>${p.name}</td><td>${p.defaultMode}</td><td>${p.universe}</td><td>${p.address}</td><td>${p.channels}</td><td>${p.powerW}</td></tr>`
       )
       .join('');
-    const trussCount = items.filter((i) => i.id === 'truss').length;
+    const trussCount = items.filter((i) => i.id === 'vara').length;
     
     let html = style;
     html += `<h1>Rider Técnico – ${title}</h1>`;
@@ -557,7 +588,7 @@ export default function Home() {
   const equipmentSummary = () => {
     const m = new Map();
     for (const i of items) {
-      if (i.id === 'truss') continue;
+      if (i.id === 'vara') continue;
       if (!m.has(i.name)) m.set(i.name, { qty: 0, power: 0 });
       const t = m.get(i.name);
       t.qty++;
@@ -566,10 +597,10 @@ export default function Home() {
     return Array.from(m, ([name, v]) => ({ name, qty: v.qty, power: v.power })).sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const totalPower = () => items.filter((i) => i.id !== 'truss').reduce((s, i) => s + (i.powerW || 0), 0);
+  const totalPower = () => items.filter((i) => i.id !== 'vara').reduce((s, i) => s + (i.powerW || 0), 0);
 
   const universosList = () =>
-    Array.from(new Set(items.filter((i) => i.id !== 'truss').map((i) => i.universe)))
+    Array.from(new Set(items.filter((i) => i.id !== 'vara').map((i) => i.universe)))
       .sort((a, b) => a - b)
       .join(', ');
 
@@ -615,6 +646,7 @@ export default function Home() {
           onUpdateItem={handleUpdateItem}
           onSendToBack={handleSendToBack}
           groups={groups}
+          onApplyMarkerToGroup={handleApplyMarkerToGroup}
         />
       </div>
     </>

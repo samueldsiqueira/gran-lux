@@ -4,7 +4,7 @@ import { ICONS } from "../app/fixtures";
 
 const PPU = 100;
 
-export default function Properties({ selectedItem, onUpdateItem, onSendToBack, groups }) {
+export default function Properties({ selectedItem, onUpdateItem, onSendToBack, groups, onApplyMarkerToGroup }) {
   if (!selectedItem) {
     return (
       <div className="card pad">
@@ -24,8 +24,8 @@ export default function Properties({ selectedItem, onUpdateItem, onSendToBack, g
 
   const handleSizeChange = (e) => {
     const { name, value } = e.target;
-    const originalWidth = selectedItem.id === "vara" ? 7.72 * PPU : 26;
-    const originalHeight = selectedItem.id === "vara" ? 10 : 26;
+    const originalWidth = selectedItem.id === "vara" ? 7.72 * PPU : 50;
+    const originalHeight = selectedItem.id === "vara" ? 10 : 50;
 
     if (name === "width") {
       const newScaleX = parseFloat(value) / originalWidth;
@@ -37,9 +37,9 @@ export default function Properties({ selectedItem, onUpdateItem, onSendToBack, g
   };
 
   const width =
-    (selectedItem.id === "vara" ? 7.72 * PPU : 26) * (selectedItem.scaleX || 1);
+    (selectedItem.id === "vara" ? 7.72 * PPU : 50) * (selectedItem.scaleX || 1);
   const height =
-    (selectedItem.id === "vara" ? 10 : 26) * (selectedItem.scaleY || 1);
+    (selectedItem.id === "vara" ? 10 : 50) * (selectedItem.scaleY || 1);
 
   return (
     <div className="card pad">
@@ -94,6 +94,36 @@ export default function Properties({ selectedItem, onUpdateItem, onSendToBack, g
               }
             />
           </div>
+          <div>
+            <label>Número do marcador</label>
+            <input
+              type="number"
+              value={selectedItem.markerNumber ?? ""}
+              placeholder="opcional"
+              onChange={(e) =>
+                onUpdateItem(selectedItem.uid, {
+                  markerNumber: e.target.value === "" ? undefined : parseInt(e.target.value) || 0,
+                })
+              }
+            />
+          </div>
+          <div>
+            <label>Cor do marcador</label>
+            <input
+              type="color"
+              value={selectedItem.color || "#111111"}
+              onChange={(e) =>
+                onUpdateItem(selectedItem.uid, { color: e.target.value })
+              }
+            />
+          </div>
+          {selectedItem.groupId && (
+            <div>
+              <button className="btn" onClick={onApplyMarkerToGroup}>
+                Aplicar marcador/cor ao grupo
+              </button>
+            </div>
+          )}
           <div>
             <label>Ícone</label>
             <select

@@ -32,8 +32,8 @@ export function Library({
     } else {
       img.src = iconSource; // Use the image path directly
     }
-    img.width = 26;
-    img.height = 26;
+    img.width = 50;
+    img.height = 50;
     e.dataTransfer.setDragImage(img, 13, 13);
   };
 
