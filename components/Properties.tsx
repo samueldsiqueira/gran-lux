@@ -4,7 +4,7 @@ import { ICONS } from "../app/fixtures";
 
 const PPU = 100;
 
-export default function Properties({ selectedItem, onUpdateItem, onSendToBack }) {
+export default function Properties({ selectedItem, onUpdateItem, onSendToBack, groups }) {
   if (!selectedItem) {
     return (
       <div className="card pad">
@@ -51,6 +51,22 @@ export default function Properties({ selectedItem, onUpdateItem, onSendToBack })
           value={selectedItem.name || ""}
           onChange={handleNameChange}
         />
+      </div>
+      <div>
+        <label>Grupo</label>
+        <select
+          value={selectedItem.groupId || ''}
+          onChange={(e) =>
+            onUpdateItem(selectedItem.uid, { groupId: e.target.value })
+          }
+        >
+          <option value="">Nenhum</option>
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <label>Rotação</label>

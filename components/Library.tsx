@@ -3,9 +3,13 @@ import { FIXTURES, ICONS } from "../app/fixtures";
 
 interface LibraryProps {
   onSizeChange: (size: number) => void;
-  onAddItem: (fixture: any) => void;
+  onAddItem: (fixture: any, groupId: string | null) => void;
   onRemoveSelected: () => void;
   onAutoPatch: () => void;
+  onAddGroup: (name: string) => void;
+  groups: { id: string; name: string }[];
+  selectedGroup: string | null;
+  setSelectedGroup: (id: string | null) => void;
 }
 
 export function Library({
@@ -13,6 +17,10 @@ export function Library({
   onAddItem,
   onRemoveSelected,
   onAutoPatch,
+  onAddGroup,
+  groups,
+  selectedGroup,
+  setSelectedGroup,
 }: LibraryProps) {
   const handleDragStart = (e, fixture) => {
     e.dataTransfer.setData("application/json", JSON.stringify(fixture));
@@ -52,12 +60,30 @@ export function Library({
           2400px
         </button>
       </div>
+      <div className="title">Grupos</div>
+      <div className="tools">
+        <button className="btn" onClick={() => onAddGroup(`Vara ${groups.length + 1}`)}>
+          Nova Vara
+        </button>
+      </div>
+      <div className="list">
+        {groups.map((group) => (
+          <div
+            key={group.id}
+            className={`item ${selectedGroup === group.id ? "selected" : ""}`}
+            onClick={() => setSelectedGroup(group.id)}
+          >
+            {group.name}
+          </div>
+        ))}
+      </div>
+      <div className="title">Itens</div>
       <div className="list">
         {FIXTURES.map((fixture) => (
           <div
             key={fixture.id}
             className="item"
-            onClick={() => onAddItem(fixture)}
+            onClick={() => onAddItem(fixture, selectedGroup)}
             draggable="true"
             onDragStart={(e) => handleDragStart(e, fixture)}
           >

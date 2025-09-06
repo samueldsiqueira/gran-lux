@@ -22,6 +22,8 @@ export default function Home() {
   const stageRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [title, setTitle] = useState('Meu Espetáculo');
+  const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   useEffect(() => {
     setStageSize({ width: 1200, height: 1200 / (16 / 9) });
@@ -108,7 +110,15 @@ export default function Home() {
     }
   };
 
-  const handleAddItem = (fixture) => {
+  const handleAddGroup = (name) => {
+    const newGroup = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+    };
+    setGroups([...groups, newGroup]);
+  };
+
+  const handleAddItem = (fixture, groupId) => {
     const newItem = {
       ...fixture,
       x: 100,
@@ -121,11 +131,12 @@ export default function Home() {
       address: 1,
       channels: channelsFrom(fixture.defaultMode),
       number: fixture.id === 'truss' ? null : getNextFixtureNumber(),
+      groupId,
     };
     setItems([...items, newItem]);
   };
 
-  const handleDrop = (fixture, position) => {
+  const handleDrop = (fixture, position, groupId) => {
     const newItem = {
       ...fixture,
       x: position.x,
@@ -138,6 +149,7 @@ export default function Home() {
       address: 1,
       channels: channelsFrom(fixture.defaultMode),
       number: fixture.id === 'truss' ? null : getNextFixtureNumber(),
+      groupId,
     };
     setItems([...items, newItem]);
   };
@@ -215,7 +227,7 @@ export default function Home() {
   };
 
   const handleExportJSON = () => {
-    const data = { items, title };
+    const data = { items, title, groups };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -226,6 +238,7 @@ export default function Home() {
   const handleImportJSON = (data) => {
     setItems(data.items || []);
     setTitle(data.title || 'Meu Espetáculo');
+    setGroups(data.groups || []);
   };
 
   const handleExportCSV = () => {
@@ -386,7 +399,6 @@ export default function Home() {
 
     win.document.write(html);
     win.document.close();
-    win.print();
   };
 
   const equipmentSummary = () => {
@@ -421,11 +433,21 @@ export default function Home() {
         onPrintRider={handlePrintRider}
       />
       <div className="wrap">
-        <Library onAddItem={handleAddItem} onRemoveSelected={handleRemoveSelected} onAutoPatch={handleAutoPatch} onSizeChange={handleSizeChange} />
+        <Library
+          onAddItem={handleAddItem}
+          onRemoveSelected={handleRemoveSelected}
+          onAutoPatch={handleAutoPatch}
+          onSizeChange={handleSizeChange}
+          onAddGroup={handleAddGroup}
+          groups={groups}
+          selectedGroup={selectedGroup}
+          setSelectedGroup={setSelectedGroup}
+        />
         <Stage
           ref={stageRef}
           items={items}
           title={title}
+          groups={groups}
           onDragEnd={handleDragEnd}
           onSelectItem={handleSelectItem}
           onDrop={handleDrop}
@@ -434,7 +456,12 @@ export default function Home() {
           width={stageSize.width}
           height={stageSize.height}
         />
-        <Properties selectedItem={selectedItem} onUpdateItem={handleUpdateItem} onSendToBack={handleSendToBack} />
+        <Properties
+          selectedItem={selectedItem}
+          onUpdateItem={handleUpdateItem}
+          onSendToBack={handleSendToBack}
+          groups={groups}
+        />
       </div>
     </>
   );

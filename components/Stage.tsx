@@ -273,6 +273,7 @@ const Stage = React.forwardRef(
     {
       items,
       title,
+      groups,
       onDragEnd,
       onSelectItem,
       selectedItem,
@@ -356,15 +357,19 @@ const Stage = React.forwardRef(
 
     const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
 
-    const sortedItems = [...items].sort((a, b) => {
-      if (a.id === 'vara' && b.id !== 'vara') {
-        return 1;
+    const fixtures = items.filter(item => item.id !== 'vara');
+    const varas = items.filter(item => item.id === 'vara');
+
+    const itemsByGroup = (itemsToGroup) => itemsToGroup.reduce((acc, item) => {
+      const groupId = item.groupId || 'ungrouped';
+      if (!acc[groupId]) {
+        acc[groupId] = [];
       }
-      if (a.id !== 'vara' && b.id === 'vara') {
-        return -1;
-      }
-      return 0;
-    });
+      acc[groupId].push(item);
+      return acc;
+    }, {});
+
+    const fixtureGroups = itemsByGroup(fixtures);
 
     return (
       <div
@@ -434,8 +439,42 @@ const Stage = React.forwardRef(
               listening={false}
             />
 
-            {/* Items */}
-            {sortedItems.map((item) => {
+            {/* Fixture Groups */}
+            {Object.entries(fixtureGroups).map(([groupId, groupItems]) => {
+              const group = groups.find(g => g.id === groupId);
+              return (
+                <Group key={groupId}>
+                  {group && (
+                    <Text
+                      text={group.name}
+                      x={groupItems[0]?.x - 10}
+                      y={groupItems[0]?.y - 30}
+                      fontSize={18}
+                      fontStyle="bold"
+                    />
+                  )}
+                  {groupItems.map((item) => {
+                    shapeRefs.current[item.uid] =
+                      shapeRefs.current[item.uid] || React.createRef();
+                    return (
+                      <Item
+                        key={item.uid}
+                        item={item}
+                        onDragEnd={onDragEnd}
+                        onSelectItem={onSelectItem}
+                        isSelected={selectedItem?.uid === item.uid}
+                        onTransformEnd={handleTransformEnd}
+                        shapeRef={shapeRefs.current[item.uid]}
+                        ppu={ppu}
+                      />
+                    );
+                  })}
+                </Group>
+              );
+            })}
+
+            {/* Varas */}
+            {varas.map((item) => {
               shapeRefs.current[item.uid] =
                 shapeRefs.current[item.uid] || React.createRef();
               return (
@@ -451,6 +490,7 @@ const Stage = React.forwardRef(
                 />
               );
             })}
+
             <Transformer ref={trRef} />
           </Layer>
         </KonvaStage>
