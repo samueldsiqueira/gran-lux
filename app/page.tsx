@@ -136,11 +136,45 @@ export default function Home() {
     setItems([...items, newItem]);
   };
 
-  const handleDrop = (fixture, position, groupId) => {
+  const handleDrop = (fixture, position, target) => {
+    let connectedTo = null;
+    // Descobre se drop foi sobre uma vara
+    let node = target;
+    try {
+      while (node && (!node.attrs || !node.attrs.name) && node.getParent) {
+        node = node.getParent();
+      }
+    } catch (_) {}
+    if (node && node.attrs && node.attrs.name === 'vara') {
+      connectedTo = node.attrs.id; // uid da vara
+    }
+
+    // Define posição final, ajustando para encostar na vara sem atravessar
+    let x = position.x;
+    let y = position.y;
+    if (connectedTo) {
+      const ppu = (stageSize.width || 1200) / 12;
+      const varaWidth = 7.72 * ppu;
+      const varaHeight = 10;
+      const halfIcon = 13; // tamanho do ícone ~ 26px
+      const margin = 2;
+      // Encontrar a vara alvo
+      const vara = items.concat().find((i) => i.uid === connectedTo) || { x: node.attrs.x, y: node.attrs.y };
+      const left = vara.x - varaWidth / 2;
+      const right = vara.x + varaWidth / 2;
+      const top = vara.y - varaHeight / 2;
+      const bottom = vara.y + varaHeight / 2;
+      // Clampa X dentro o comprimento da vara com uma folga para não sair
+      x = Math.max(left + halfIcon, Math.min(right - halfIcon, x));
+      // Decide lado (acima/abaixo) com base no Y do drop
+      const placeAbove = position.y < vara.y;
+      y = placeAbove ? top - halfIcon - margin : bottom + halfIcon + margin;
+    }
+
     const newItem = {
       ...fixture,
-      x: position.x,
-      y: position.y,
+      x,
+      y,
       rotation: 0,
       scaleX: 1,
       scaleY: 1,
@@ -149,18 +183,90 @@ export default function Home() {
       address: 1,
       channels: channelsFrom(fixture.defaultMode),
       number: fixture.id === 'truss' ? null : getNextFixtureNumber(),
-      groupId,
+      connectedTo,
     };
     setItems([...items, newItem]);
   };
 
-  const handleDragEnd = (uid, x, y) => {
-    const newItems = items.map((item) => {
-      if (item.uid === uid) {
-        return { ...item, x, y };
+  const handleDragMove = (uid, x, y) => {
+    const newItems = [...items];
+    const itemIndex = newItems.findIndex((i) => i.uid === uid);
+    if (itemIndex === -1) return;
+    const item = newItems[itemIndex];
+
+    // If dragging a vara, move all connected items in real-time
+    if (item.id === 'vara') {
+      const dx = x - item.x;
+      const dy = y - item.y;
+      newItems[itemIndex] = { ...item, x, y };
+      if (dx !== 0 || dy !== 0) {
+        for (let i = 0; i < newItems.length; i++) {
+          if (newItems[i].connectedTo === uid) {
+            newItems[i] = { ...newItems[i], x: newItems[i].x + dx, y: newItems[i].y + dy };
+          }
+        }
       }
-      return item;
-    });
+      setItems(newItems);
+      return;
+    }
+
+    // Otherwise, dragging a fixture: update position and snap/connect to nearest vara
+    newItems[itemIndex] = { ...item, x, y };
+
+    const varas = newItems.filter(i => i.id === 'vara');
+    const ppu = (stageSize.width || 1200) / 12;
+    const varaWidth = 7.72 * ppu;
+    const varaHeight = 10;
+    const halfIcon = 13;
+    const margin = 2;
+    let snapped = false;
+    for (const vara of varas) {
+      const left = vara.x - varaWidth / 2;
+      const right = vara.x + varaWidth / 2;
+      const top = vara.y - varaHeight / 2;
+      const bottom = vara.y + varaHeight / 2;
+      const withinX = x >= left - 20 && x <= right + 20;
+      const nearY = Math.min(Math.abs(y - top), Math.abs(y - bottom), Math.abs(y - vara.y)) < 40;
+      if (withinX && nearY) {
+        const clampedX = Math.max(left + halfIcon, Math.min(right - halfIcon, x));
+        const placeAbove = y < vara.y;
+        const snapY = placeAbove ? top - halfIcon - margin : bottom + halfIcon + margin;
+        newItems[itemIndex] = { ...newItems[itemIndex], x: clampedX, y: snapY, connectedTo: vara.uid };
+        snapped = true;
+        break;
+      }
+    }
+
+    if (!snapped) {
+      newItems[itemIndex] = { ...newItems[itemIndex], connectedTo: null };
+    }
+
+    setItems(newItems);
+  };
+
+  const handleDragEnd = (uid, x, y) => {
+    const newItems = [...items];
+    const item = newItems.find((i) => i.uid === uid);
+    const itemIndex = newItems.findIndex((i) => i.uid === uid);
+    const oldX = item.x;
+    const oldY = item.y;
+
+    newItems[itemIndex] = { ...item, x, y };
+
+    if (item.id === 'vara') {
+      const connectedFixtures = newItems.filter(i => i.connectedTo === uid);
+      connectedFixtures.forEach(fixture => {
+        const fixtureIndex = newItems.findIndex(i => i.uid === fixture.uid);
+        if (fixtureIndex !== -1) {
+          newItems[fixtureIndex] = {
+            ...newItems[fixtureIndex],
+            x: newItems[fixtureIndex].x + (x - oldX),
+            y: newItems[fixtureIndex].y + (y - oldY),
+          };
+        }
+      });
+    }
+
     setItems(newItems);
   };
 
@@ -455,6 +561,7 @@ export default function Home() {
           onUpdateItem={handleUpdateItem}
           width={stageSize.width}
           height={stageSize.height}
+          onDragMove={handleDragMove}
         />
         <Properties
           selectedItem={selectedItem}

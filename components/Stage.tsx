@@ -77,6 +77,7 @@ const FixtureImage = ({
   isSelected,
   onTransformEnd,
   shapeRef,
+  onDragMove,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -94,10 +95,12 @@ const FixtureImage = ({
       <Group
         ref={shapeRef}
         id={item.uid}
+        name={item.id}
         x={item.x}
         y={item.y}
         draggable
         onDragEnd={handleDragEnd}
+        onDragMove={onDragMove}
         onMouseDown={(e) => {
           e.cancelBubble = true;
           onSelectItem(item.uid);
@@ -148,6 +151,7 @@ const FixtureImage = ({
         y={item.y}
         draggable
         onDragEnd={handleDragEnd}
+        onDragMove={onDragMove}
         onMouseDown={(e) => {
           e.cancelBubble = true;
           onSelectItem(item.uid);
@@ -199,6 +203,7 @@ const Vara = ({
   onTransformEnd,
   shapeRef,
   ppu,
+  onDragMove,
 }) => {
   const handleDragEnd = (e) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
@@ -211,12 +216,14 @@ const Vara = ({
     <Rect
       ref={shapeRef}
       id={item.uid}
+      name={item.id}
       x={item.x}
       y={item.y}
       width={width}
       height={height}
       fill="black"
       draggable
+      onDragMove={onDragMove}
       onDragEnd={handleDragEnd}
       onMouseDown={(e) => {
         e.cancelBubble = true;
@@ -242,6 +249,8 @@ const Item = ({
   onTransformEnd,
   shapeRef,
   ppu,
+  onDragMove,
+  items,
 }) => {
   if (item.id === "vara") {
     return (
@@ -253,6 +262,7 @@ const Item = ({
         onTransformEnd={onTransformEnd}
         shapeRef={shapeRef}
         ppu={ppu}
+        onDragMove={onDragMove}
       />
     );
   }
@@ -264,6 +274,8 @@ const Item = ({
       isSelected={isSelected}
       onTransformEnd={onTransformEnd}
       shapeRef={shapeRef}
+      onDragMove={onDragMove}
+      items={items}
     />
   );
 };
@@ -281,6 +293,7 @@ const Stage = React.forwardRef(
       onDrop,
       width,
       height,
+      onDragMove,
     },
     ref,
   ) => {
@@ -342,12 +355,18 @@ const Stage = React.forwardRef(
 
     const handleDrop = (e) => {
       e.preventDefault();
-      const fixture = JSON.parse(e.dataTransfer.getData("application/json"));
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      onDrop(fixture, { x, y });
+      const data = e.dataTransfer.getData("application/json");
+      if (!data) return;
+      const fixture = JSON.parse(data);
+      const stage = ref.current;
+      if (!stage) return;
+      const rect = stage.container().getBoundingClientRect();
+      const pointerPosition = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      const target = stage.getIntersection(pointerPosition) || null;
+      onDrop(fixture, pointerPosition, target);
     };
 
     const stageWidth = 7.72 * ppu;
@@ -359,17 +378,6 @@ const Stage = React.forwardRef(
 
     const fixtures = items.filter(item => item.id !== 'vara');
     const varas = items.filter(item => item.id === 'vara');
-
-    const itemsByGroup = (itemsToGroup) => itemsToGroup.reduce((acc, item) => {
-      const groupId = item.groupId || 'ungrouped';
-      if (!acc[groupId]) {
-        acc[groupId] = [];
-      }
-      acc[groupId].push(item);
-      return acc;
-    }, {});
-
-    const fixtureGroups = itemsByGroup(fixtures);
 
     return (
       <div
@@ -439,37 +447,23 @@ const Stage = React.forwardRef(
               listening={false}
             />
 
-            {/* Fixture Groups */}
-            {Object.entries(fixtureGroups).map(([groupId, groupItems]) => {
-              const group = groups.find(g => g.id === groupId);
+            {/* Fixtures */}
+            {fixtures.map((item) => {
+              shapeRefs.current[item.uid] =
+                shapeRefs.current[item.uid] || React.createRef();
               return (
-                <Group key={groupId}>
-                  {group && (
-                    <Text
-                      text={group.name}
-                      x={groupItems[0]?.x - 10}
-                      y={groupItems[0]?.y - 30}
-                      fontSize={18}
-                      fontStyle="bold"
-                    />
-                  )}
-                  {groupItems.map((item) => {
-                    shapeRefs.current[item.uid] =
-                      shapeRefs.current[item.uid] || React.createRef();
-                    return (
-                      <Item
-                        key={item.uid}
-                        item={item}
-                        onDragEnd={onDragEnd}
-                        onSelectItem={onSelectItem}
-                        isSelected={selectedItem?.uid === item.uid}
-                        onTransformEnd={handleTransformEnd}
-                        shapeRef={shapeRefs.current[item.uid]}
-                        ppu={ppu}
-                      />
-                    );
-                  })}
-                </Group>
+                <Item
+                  key={item.uid}
+                  item={item}
+                  onDragEnd={onDragEnd}
+                  onSelectItem={onSelectItem}
+                  isSelected={selectedItem?.uid === item.uid}
+                  onTransformEnd={handleTransformEnd}
+                  shapeRef={shapeRefs.current[item.uid]}
+                  ppu={ppu}
+                  onDragMove={(e) => onDragMove(item.uid, e.target.x(), e.target.y())}
+                  items={items}
+                />
               );
             })}
 
@@ -487,6 +481,7 @@ const Stage = React.forwardRef(
                   onTransformEnd={handleTransformEnd}
                   shapeRef={shapeRefs.current[item.uid]}
                   ppu={ppu}
+                  onDragMove={(e) => onDragMove(item.uid, e.target.x(), e.target.y())}
                 />
               );
             })}
