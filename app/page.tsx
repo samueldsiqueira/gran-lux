@@ -25,6 +25,14 @@ export default function Home() {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
 
+  // Snap/geometry constants
+  const ICON_SIZE = 26;
+  const HALF_ICON = ICON_SIZE / 2;
+  const SNAP_MARGIN = 2;
+  const SNAP_SPACING = 50; // pixels between attachment points along the vara
+  const VARA_LENGTH_M = 7.72; // meters represented horizontally
+  const VARA_HEIGHT = 10; // px height of vara rectangle
+
   useEffect(() => {
     setStageSize({ width: 1200, height: 1200 / (16 / 9) });
   }, []);
@@ -37,6 +45,57 @@ export default function Home() {
   const getNextFixtureNumber = () => {
     const numbers = items.filter(item => item.number).map(item => item.number);
     return numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+  };
+
+  // Helpers for snapping to a vara (supports rotation)
+  const getPPU = () => (stageSize.width || 1200) / 12;
+
+  const varaDims = (ppu) => ({ width: VARA_LENGTH_M * ppu, height: VARA_HEIGHT });
+
+  const toLocal = (vara, point) => {
+    const angle = ((vara.rotation || 0) * Math.PI) / 180;
+    const dx = point.x - vara.x;
+    const dy = point.y - vara.y;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    // rotate by -angle
+    return { x: cos * dx + sin * dy, y: -sin * dx + cos * dy };
+  };
+
+  const toWorld = (vara, local) => {
+    const angle = ((vara.rotation || 0) * Math.PI) / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+      x: vara.x + cos * local.x - sin * local.y,
+      y: vara.y + sin * local.x + cos * local.y,
+    };
+  };
+
+  const snapOnVara = (vara, point) => {
+    const ppu = getPPU();
+    const { width, height } = varaDims(ppu);
+    const local = toLocal(vara, point);
+    // Snap X to spacing and clamp to bar
+    let lx = Math.round(local.x / SNAP_SPACING) * SNAP_SPACING;
+    const minX = -width / 2 + HALF_ICON;
+    const maxX = width / 2 - HALF_ICON;
+    lx = Math.max(minX, Math.min(maxX, lx));
+
+    // Choose side (above if local.y < 0)
+    const above = local.y < 0;
+    const ly = (above ? -1 : 1) * (height / 2 + HALF_ICON + SNAP_MARGIN);
+
+    return toWorld(vara, { x: lx, y: ly });
+  };
+
+  const isNearVara = (vara, point) => {
+    const ppu = getPPU();
+    const { width, height } = varaDims(ppu);
+    const local = toLocal(vara, point);
+    const nearY = Math.abs(local.y) <= height / 2 + HALF_ICON + 40; // 40px tolerance
+    const withinX = local.x >= -width / 2 - 20 && local.x <= width / 2 + 20; // 20px tolerance at ends
+    return withinX && nearY;
   };
 
   const renumberFixtures = (currentItems) => {
@@ -153,22 +212,12 @@ export default function Home() {
     let x = position.x;
     let y = position.y;
     if (connectedTo) {
-      const ppu = (stageSize.width || 1200) / 12;
-      const varaWidth = 7.72 * ppu;
-      const varaHeight = 10;
-      const halfIcon = 13; // tamanho do ícone ~ 26px
-      const margin = 2;
-      // Encontrar a vara alvo
-      const vara = items.concat().find((i) => i.uid === connectedTo) || { x: node.attrs.x, y: node.attrs.y };
-      const left = vara.x - varaWidth / 2;
-      const right = vara.x + varaWidth / 2;
-      const top = vara.y - varaHeight / 2;
-      const bottom = vara.y + varaHeight / 2;
-      // Clampa X dentro o comprimento da vara com uma folga para não sair
-      x = Math.max(left + halfIcon, Math.min(right - halfIcon, x));
-      // Decide lado (acima/abaixo) com base no Y do drop
-      const placeAbove = position.y < vara.y;
-      y = placeAbove ? top - halfIcon - margin : bottom + halfIcon + margin;
+      const vara = items.find((i) => i.uid === connectedTo);
+      if (vara) {
+        const snapped = snapOnVara(vara, position);
+        x = snapped.x;
+        y = snapped.y;
+      }
     }
 
     const newItem = {
@@ -214,24 +263,11 @@ export default function Home() {
     newItems[itemIndex] = { ...item, x, y };
 
     const varas = newItems.filter(i => i.id === 'vara');
-    const ppu = (stageSize.width || 1200) / 12;
-    const varaWidth = 7.72 * ppu;
-    const varaHeight = 10;
-    const halfIcon = 13;
-    const margin = 2;
     let snapped = false;
     for (const vara of varas) {
-      const left = vara.x - varaWidth / 2;
-      const right = vara.x + varaWidth / 2;
-      const top = vara.y - varaHeight / 2;
-      const bottom = vara.y + varaHeight / 2;
-      const withinX = x >= left - 20 && x <= right + 20;
-      const nearY = Math.min(Math.abs(y - top), Math.abs(y - bottom), Math.abs(y - vara.y)) < 40;
-      if (withinX && nearY) {
-        const clampedX = Math.max(left + halfIcon, Math.min(right - halfIcon, x));
-        const placeAbove = y < vara.y;
-        const snapY = placeAbove ? top - halfIcon - margin : bottom + halfIcon + margin;
-        newItems[itemIndex] = { ...newItems[itemIndex], x: clampedX, y: snapY, connectedTo: vara.uid };
+      if (isNearVara(vara, { x, y })) {
+        const snappedPt = snapOnVara(vara, { x, y });
+        newItems[itemIndex] = { ...newItems[itemIndex], x: snappedPt.x, y: snappedPt.y, connectedTo: vara.uid };
         snapped = true;
         break;
       }
@@ -280,13 +316,24 @@ export default function Home() {
   };
 
   const handleUpdateItem = (uid, properties) => {
-    const newItems = items.map((item) => {
-      if (item.uid === uid) {
-        return { ...item, ...properties };
-      }
-      return item;
-    });
-    setItems(newItems);
+    // Detect rotation change on a vara to re-snap connected fixtures
+    const current = items.find((i) => i.uid === uid);
+    const rotationChanged = current && current.id === 'vara' && properties.rotation !== undefined && properties.rotation !== current.rotation;
+
+    let updated = items.map((item) => (item.uid === uid ? { ...item, ...properties } : item));
+
+    if (rotationChanged) {
+      const vara = updated.find((i) => i.uid === uid);
+      updated = updated.map((i) => {
+        if (i.connectedTo === uid) {
+          const snapped = snapOnVara(vara, { x: i.x, y: i.y });
+          return { ...i, x: snapped.x, y: snapped.y };
+        }
+        return i;
+      });
+    }
+
+    setItems(updated);
     if (selectedItem?.uid === uid) {
       setSelectedItem({ ...selectedItem, ...properties });
     }
