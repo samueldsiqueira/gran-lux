@@ -25,10 +25,50 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
+      <head>
+        {/* Suppress React DevTools errors IMMEDIATELY - inline for earliest execution */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(){
+                if(typeof window!=='undefined'){
+                  const OriginalError=window.Error;
+                  window.Error=function(message){
+                    if(typeof message==='string'&&(message.includes('not valid semver')||message.includes('validateAndParse')||message.includes('react_devtools'))){
+                      const err=new OriginalError('');err.stack='';return err;
+                    }
+                    return new OriginalError(message);
+                  };
+                  window.Error.prototype=OriginalError.prototype;
+                  const originalError=console.error;
+                  const originalWarn=console.warn;
+                  const shouldSuppress=args=>{
+                    const message=String(args[0]||'');
+                    return message.includes('not valid semver')||message.includes('react_devtools_backend')||message.includes('validateAndParse')||message.includes('Invalid argument');
+                  };
+                  console.error=function(...args){if(shouldSuppress(args))return;originalError.apply(console,args);};
+                  console.warn=function(...args){if(shouldSuppress(args))return;originalWarn.apply(console,args);};
+                  window.addEventListener('error',function(event){
+                    if(event.message&&(event.message.includes('not valid semver')||event.message.includes('react_devtools'))){
+                      event.preventDefault();event.stopPropagation();return false;
+                    }
+                  },true);
+                  window.addEventListener('unhandledrejection',function(event){
+                    const reason=String(event.reason||'');
+                    if(reason.includes('not valid semver')||reason.includes('react_devtools')){
+                      event.preventDefault();event.stopPropagation();return false;
+                    }
+                  },true);
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
-        {/* Suppress React DevTools semver warnings - only in development */}
+        {/* Additional suppression script */}
         {process.env.NODE_ENV === 'development' && (
           <Script
             src="/suppress-devtools-error.js"
