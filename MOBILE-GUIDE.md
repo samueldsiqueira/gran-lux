@@ -1,30 +1,93 @@
 # Guia de Uso em Dispositivos Móveis
 
-## 📱 Melhorias de Responsividade
+## 📱 Melhorias de Responsividade - Versão 2.0
 
-Este projeto foi otimizado para funcionar em celulares e tablets com as seguintes funcionalidades:
+Este projeto foi completamente otimizado para funcionar em celulares e tablets com interfaces dedicadas para mobile.
 
 ### ✨ Recursos Mobile
 
-#### 1. **Layout Responsivo**
-- **Desktop (>1024px)**: Layout de 3 colunas (Biblioteca | Canvas | Propriedades)
-- **Tablet (768px-1024px)**: Layout de 3 colunas com larguras reduzidas
-- **Mobile (<768px)**: Layout de 1 coluna com painéis deslizantes
+#### 1. **Interfaces Específicas para Mobile**
+- **Biblioteca**: Interface colapsável com seções organizadas
+- **Propriedades**: Formulário otimizado com grupos visuais
+- **Detecção automática**: O app detecta se está em mobile e ajusta automaticamente
 
-#### 2. **Painéis Deslizantes**
-Em dispositivos móveis, os painéis laterais ficam ocultos e podem ser acessados através de botões:
-- **📚 Biblioteca**: Botão na parte inferior para abrir a biblioteca de fixtures
-- **⚙️ Propriedades**: Botão na parte inferior para abrir o painel de propriedades
+#### 2. **Biblioteca Mobile (📚)**
+**Seções Colapsáveis:**
+- 🏷️ **Grupos**: Gerenciar varas e agrupamentos
+  - Botão grande "➕ Nova Vara"
+  - Lista com ícones visuais
+  - Seleção por toque
 
-#### 3. **Interação por Toque**
-- Todos os botões têm altura mínima de 44px para facilitar o toque
-- Gestos de arraste funcionam nativamente no canvas
-- Pinch-to-zoom suportado no stage
+- 💡 **Equipamentos**: Todos os fixtures disponíveis
+  - Ícones maiores (32x32px)
+  - Informações mais legíveis
+  - Nome e especificações em linhas separadas
 
-#### 4. **Otimizações de Tela**
-- **Fontes reduzidas** em telas pequenas para melhor legibilidade
-- **Espaçamentos ajustados** para economizar espaço
-- **Grids adaptáveis** que reorganizam os itens conforme o tamanho da tela
+- ⚡ **Ações**: Ferramentas e configurações
+  - Auto-patch DMX
+  - Remover item selecionado
+  - Ajuste de tamanho do palco (3 tamanhos pré-definidos)
+
+**Características:**
+- ✅ Cabeçalho fixo com título
+- ✅ Seções expandem/colapsam com animação suave
+- ✅ Chevron (▼) indica estado aberto/fechado
+- ✅ Apenas uma seção por vez (foco no conteúdo)
+- ✅ Ícones emojis para identificação rápida
+
+#### 3. **Propriedades Mobile (⚙️)**
+**Quando nenhum item está selecionado:**
+- Mensagem clara com ícone
+- Instruções de como selecionar
+
+**Quando item está selecionado:**
+
+**Grupos Organizados:**
+1. **Informações Básicas**
+   - Nome do item
+   - Grupo associado
+
+2. **Transformação**
+   - Slider de rotação com valor em tempo real
+   - Largura e altura lado a lado (grid 2 colunas)
+
+3. **Equipamento** (apenas para fixtures)
+   - Potência e Número do marcador em grid
+   - Seletor de cor visual
+   - Dropdown de ícones
+   - Modos e modo padrão
+
+4. **Ações**
+   - Botões grandes com ícones
+   - "🏷️ Aplicar Marcador ao Grupo"
+   - "📤 Enviar para Trás"
+
+**Características:**
+- ✅ Labels claras acima de cada campo
+- ✅ Inputs com altura de 44px (touch-friendly)
+- ✅ Grupos visuais separados por bordas
+- ✅ Tipografia otimizada (13-15px)
+- ✅ Estados de foco destacados
+
+#### 4. **Layout Responsivo**
+- **Desktop (>1024px)**: 3 colunas lado a lado
+- **Tablet (768px-1024px)**: 3 colunas compactas
+- **Mobile (<768px)**: 1 coluna com painéis deslizantes
+
+#### 5. **Painéis Deslizantes**
+Em dispositivos móveis:
+- **📚 Biblioteca**: Desliza da esquerda (85% da tela, máx 320px)
+- **⚙️ Propriedades**: Desliza da direita (85% da tela, máx 320px)
+- **Backdrop escuro**: Fecha painéis ao tocar fora
+- **Apenas 1 painel aberto**: Abre automaticamente fecha o outro
+
+#### 6. **Interação por Toque Otimizada**
+- ✅ Altura mínima de 44px em todos os elementos clicáveis
+- ✅ Áreas de toque generosas
+- ✅ Feedback visual ao tocar (active state)
+- ✅ Sem necessidade de arrastar (toque para adicionar)
+- ✅ Smooth scrolling nativo
+- ✅ Sem prevenção de zoom (beliscar para dar zoom)
 
 ### 📐 Breakpoints
 
