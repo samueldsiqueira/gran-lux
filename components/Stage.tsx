@@ -542,6 +542,28 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
         }}
         onMouseUp={() => { isPanningRef.current = false; lastClientRef.current = null; }}
         onMouseLeave={() => { isPanningRef.current = false; lastClientRef.current = null; }}
+        onTouchStart={(e) => {
+          // Only pan with 1 finger on background (not on items)
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            isPanningRef.current = true;
+            lastClientRef.current = { x: touch.clientX, y: touch.clientY };
+          }
+        }}
+        onTouchMove={(e) => {
+          if (!isPanningRef.current || !lastClientRef.current) return;
+          if (e.touches.length !== 1) return; // Only single touch pan
+          
+          const touch = e.touches[0];
+          const dx = touch.clientX - lastClientRef.current.x;
+          const dy = touch.clientY - lastClientRef.current.y;
+          lastClientRef.current = { x: touch.clientX, y: touch.clientY };
+          setOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+        }}
+        onTouchEnd={() => { 
+          isPanningRef.current = false; 
+          lastClientRef.current = null; 
+        }}
         onWheel={(e) => {
           e.preventDefault();
           const intensity = e.ctrlKey || e.metaKey ? 1.15 : 1.07;
