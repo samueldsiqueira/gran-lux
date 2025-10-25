@@ -786,6 +786,7 @@ export default function Home() {
             groups={groups}
             selectedGroup={selectedGroup}
             setSelectedGroup={setSelectedGroup}
+            onCloseSidebar={() => setLeftSidebarOpen(false)}
           />
         </div>
         <Stage

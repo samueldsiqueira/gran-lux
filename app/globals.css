@@ -88,9 +88,13 @@ th{background:#f8fafc;text-align:left}
     bottom:0;
     background:rgba(0,0,0,0.5);
     z-index:99;
+    pointer-events: none; /* Don't block drag & drop detection */
   }
   
-  .mobile-backdrop.show{display:block}
+  .mobile-backdrop.show{
+    display:block;
+    pointer-events: auto; /* Enable clicking to close sidebars */
+  }
   
   .list{grid-template-columns:1fr}
   .row{grid-template-columns:100px 1fr;gap:6px}

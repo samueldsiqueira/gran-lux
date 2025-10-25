@@ -21,6 +21,7 @@ interface LibraryProps {
   groups: { id: string; name: string }[];
   selectedGroup: string | null;
   setSelectedGroup: (id: string | null) => void;
+  onCloseSidebar?: () => void; // New prop to close sidebar during drag
 }
 
 export function Library({
@@ -32,6 +33,7 @@ export function Library({
   groups,
   selectedGroup,
   setSelectedGroup,
+  onCloseSidebar,
 }: LibraryProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [groupsOpen, setGroupsOpen] = useState(true);
@@ -53,6 +55,12 @@ export function Library({
     const touch = e.touches[0];
     setDraggingFixture(fixture);
     setTouchDragPosition({ x: touch.clientX, y: touch.clientY });
+    
+    // Close sidebar to remove backdrop - this fixes "Element at point: DIV mobile-backdrop"
+    if (onCloseSidebar) {
+      setTimeout(() => onCloseSidebar(), 100); // Small delay to let drag start
+    }
+    
     e.stopPropagation();
   };
 
