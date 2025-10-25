@@ -244,13 +244,8 @@ export function Library({
                   <button className="btn danger" onClick={onRemoveSelected} style={{width: '100%'}}>
                     🗑️ Remover Selecionado
                   </button>
-                  <div style={{marginTop: '8px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--mut)'}}>
-                    Tamanho do Palco
-                  </div>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px'}}>
-                    <button className="btn" onClick={() => onSizeChange(800)}>800px</button>
-                    <button className="btn" onClick={() => onSizeChange(1400)}>1200px</button>
-                    <button className="btn" onClick={() => onSizeChange(2000)}>2400px</button>
+                  <div style={{marginTop: '8px', marginBottom: '4px', fontSize: '11px', color: 'var(--mut)', textAlign: 'center'}}>
+                    💡 Tamanho ajustado automaticamente para mobile
                   </div>
                 </div>
               </div>

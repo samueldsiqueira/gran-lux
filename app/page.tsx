@@ -40,10 +40,17 @@ export default function Home() {
   const VARA_HEIGHT = 10; // px height of vara rectangle
 
   useEffect(() => {
-    const w = 1200;
-    const h = 1200 / (16 / 9);
+    // Set stage size based on screen width
+    const isMobile = window.innerWidth <= 768;
+    const w = isMobile ? 800 : 1200; // Smaller on mobile
+    const h = w / (16 / 9);
     setStageSize({ width: w, height: h });
     baseStageWidthRef.current = w;
+    
+    // Also set initial scale for mobile
+    if (isMobile) {
+      setStageScale(0.8); // Start with smaller scale on mobile
+    }
 
     // Listen for touch drag events from Library component
     const handleFixtureDropped = (e: any) => {
@@ -103,11 +110,32 @@ export default function Home() {
     console.log('Adding fixtureDropped event listener');
     window.addEventListener('fixtureDropped', handleFixtureDropped);
     
+    // Handle window resize
+    const handleResize = () => {
+      const isMobileNow = window.innerWidth <= 768;
+      const newW = isMobileNow ? 800 : 1200;
+      const newH = newW / (16 / 9);
+      
+      // Only update if size actually changed
+      if (newW !== stageSize.width) {
+        setStageSize({ width: newW, height: newH });
+        baseStageWidthRef.current = newW;
+        
+        // Adjust scale for mobile
+        if (isMobileNow && stageScale > 0.8) {
+          setStageScale(0.8);
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
     return () => {
       console.log('Removing fixtureDropped event listener');
       window.removeEventListener('fixtureDropped', handleFixtureDropped);
+      window.removeEventListener('resize', handleResize);
     };
-  }, [items, selectedGroup, stageScale]);
+  }, [items, selectedGroup, stageScale, stageSize.width]);
 
   const handleSizeChange = (newWidth: number) => {
     const base = baseStageWidthRef.current || stageSize.width || 1200;
