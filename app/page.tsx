@@ -405,6 +405,12 @@ export default function Home() {
     }
     const item = items.find((item) => item.uid === uid);
     setSelectedItem(item || null);
+    
+    // On mobile, auto-open properties panel when item is selected
+    if (typeof window !== 'undefined' && window.innerWidth <= 768 && item) {
+      setRightSidebarOpen(true);
+      setLeftSidebarOpen(false);
+    }
   };
 
   const handleUpdateItem = (uid: string, properties: Partial<Item>) => {

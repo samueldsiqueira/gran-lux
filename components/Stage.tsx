@@ -174,6 +174,10 @@ const FixtureImage = ({
           e.cancelBubble = true;
           onSelectItem(item.uid);
         }}
+        onTap={(e) => {
+          e.cancelBubble = true;
+          onSelectItem(item.uid);
+        }}
         onTransformEnd={handleTransformEnd}
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
@@ -208,6 +212,10 @@ const FixtureImage = ({
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
         onMouseDown={(e) => {
+          e.cancelBubble = true;
+          onSelectItem(item.uid);
+        }}
+        onTap={(e) => {
           e.cancelBubble = true;
           onSelectItem(item.uid);
         }}
@@ -308,6 +316,10 @@ const Vara = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shape
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onMouseDown={(e) => {
+        e.cancelBubble = true;
+        onSelectItem(item.uid);
+      }}
+      onTap={(e) => {
         e.cancelBubble = true;
         onSelectItem(item.uid);
       }}
@@ -558,6 +570,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
                 height={height}
                 fill="#f1f5f9"
                 onMouseDown={() => onSelectItem(null)}
+                onTap={() => onSelectItem(null)}
               />
 
             {/* Grid */}
@@ -581,6 +594,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
               stroke="black"
               strokeWidth={2}
               onMouseDown={() => onSelectItem(null)}
+              onTap={() => onSelectItem(null)}
             />
             <Text
               text="PALCO"
@@ -600,6 +614,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
               strokeWidth={1}
               strokeDash={[10, 5]}
               onMouseDown={() => onSelectItem(null)}
+              onTap={() => onSelectItem(null)}
             />
             <Text
               text="FRENTE DO PALCO"
