@@ -494,3 +494,19 @@ th{background:#f8fafc;text-align:left}
     50% { opacity: 0.5; }
   }
 }
+
+/* Drag preview pulse animation */
+@keyframes pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+/* Dragging state */
+.item.dragging {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}

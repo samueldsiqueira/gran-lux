@@ -47,15 +47,26 @@ export default function Home() {
 
     // Listen for touch drag events from Library component
     const handleFixtureDropped = (e: any) => {
+      console.log('fixtureDropped event received!', e.detail);
       const { fixture, x, y } = e.detail;
+      
+      console.log('Fixture:', fixture.name, 'Position:', x, y);
       
       // Get stage element and calculate relative position
       const stage = stageRef.current;
+      console.log('Stage ref:', stage);
+      
       if (stage) {
         const stageContainer = stage.container();
         const rect = stageContainer.getBoundingClientRect();
+        
+        console.log('Stage rect:', rect);
+        console.log('Stage scale:', stageScale);
+        
         const relativeX = (x - rect.left) / stageScale;
         const relativeY = (y - rect.top) / stageScale;
+        
+        console.log('Relative position:', relativeX, relativeY);
         
         // Add fixture at touch position
         const newItem: Item = {
@@ -77,16 +88,23 @@ export default function Home() {
           number: fixture.id === 'vara' ? null : getNextFixtureNumber(),
           groupId: selectedGroup,
         };
+        
+        console.log('Adding new item:', newItem);
         setItems([...items, newItem]);
         
         // Close sidebar after adding
         setLeftSidebarOpen(false);
+        console.log('Item added, sidebar closed');
+      } else {
+        console.error('Stage ref is null!');
       }
     };
 
+    console.log('Adding fixtureDropped event listener');
     window.addEventListener('fixtureDropped', handleFixtureDropped);
     
     return () => {
+      console.log('Removing fixtureDropped event listener');
       window.removeEventListener('fixtureDropped', handleFixtureDropped);
     };
   }, [items, selectedGroup, stageScale]);

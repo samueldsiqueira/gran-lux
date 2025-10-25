@@ -49,9 +49,11 @@ export function Library({
 
   const handleTouchStart = (e: React.TouchEvent, fixture: Fixture) => {
     if (!isMobile) return;
+    console.log('Touch start on fixture:', fixture.name);
     const touch = e.touches[0];
     setDraggingFixture(fixture);
     setTouchDragPosition({ x: touch.clientX, y: touch.clientY });
+    e.stopPropagation();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -59,27 +61,47 @@ export function Library({
     const touch = e.touches[0];
     setTouchDragPosition({ x: touch.clientX, y: touch.clientY });
     e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!draggingFixture) return;
     
+    console.log('Touch end, dragging:', draggingFixture.name);
     const touch = e.changedTouches[0];
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const x = touch.clientX;
+    const y = touch.clientY;
+    
+    console.log('Drop position:', x, y);
     
     // Check if dropped on stage canvas
     const stageCanvas = document.querySelector('canvas');
-    if (stageCanvas && stageCanvas.contains(element as Node)) {
+    const element = document.elementFromPoint(x, y);
+    
+    console.log('Element at point:', element?.tagName);
+    console.log('Stage canvas found:', !!stageCanvas);
+    
+    // More flexible check - if canvas exists or if element is canvas
+    const isOnStage = (stageCanvas && (element === stageCanvas || stageCanvas.contains(element as Node))) ||
+                     element?.tagName === 'CANVAS';
+    
+    console.log('Is on stage:', isOnStage);
+    
+    if (isOnStage) {
+      console.log('Dispatching fixtureDropped event');
       // Trigger add item at the touch position
-      // Will be handled by parent component via custom event
       const event = new CustomEvent('fixtureDropped', {
         detail: {
           fixture: draggingFixture,
-          x: touch.clientX,
-          y: touch.clientY
+          x: x,
+          y: y
         }
       });
       window.dispatchEvent(event);
+    } else {
+      // If not dropped on stage, just add to center as fallback
+      console.log('Not on stage, adding to center');
+      onAddItem(draggingFixture, selectedGroup);
     }
     
     setDraggingFixture(null);
@@ -153,12 +175,26 @@ export function Library({
                   {FIXTURES.map((fixture) => (
                     <div
                       key={fixture.id}
-                      className="item"
-                      onClick={() => onAddItem(fixture, selectedGroup)}
+                      className={`item ${draggingFixture?.id === fixture.id ? 'dragging' : ''}`}
+                      onClick={() => {
+                        // Only add on click if not dragging
+                        if (!draggingFixture) {
+                          onAddItem(fixture, selectedGroup);
+                        }
+                      }}
                       onTouchStart={(e) => handleTouchStart(e, fixture)}
                       onTouchMove={handleTouchMove}
                       onTouchEnd={handleTouchEnd}
-                      style={{ touchAction: 'none', userSelect: 'none' }}
+                      onTouchCancel={() => {
+                        setDraggingFixture(null);
+                        setTouchDragPosition(null);
+                      }}
+                      style={{ 
+                        touchAction: 'none', 
+                        userSelect: 'none',
+                        opacity: draggingFixture?.id === fixture.id ? 0.3 : 1,
+                        transition: 'opacity 0.2s'
+                      }}
                     >
                       {(() => {
                         const iconSource = ICONS[fixture.icon as keyof typeof ICONS];
@@ -225,36 +261,51 @@ export function Library({
           <div
             style={{
               position: 'fixed',
-              left: touchDragPosition.x - 25,
-              top: touchDragPosition.y - 25,
-              width: '50px',
-              height: '50px',
-              opacity: 0.7,
+              left: touchDragPosition.x - 40,
+              top: touchDragPosition.y - 40,
+              width: '80px',
+              height: '80px',
+              opacity: 0.9,
               pointerEvents: 'none',
-              zIndex: 9999,
+              zIndex: 99999,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               background: '#fff',
-              borderRadius: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              borderRadius: '16px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              border: '3px solid #0ea5e9',
+              animation: 'pulse 0.5s ease-in-out infinite alternate',
             }}
           >
             {(() => {
               const iconSource = ICONS[draggingFixture.icon as keyof typeof ICONS];
               if (iconSource.startsWith("<svg")) {
-                return <div dangerouslySetInnerHTML={{ __html: iconSource }} />;
+                return <div dangerouslySetInnerHTML={{ __html: iconSource }} style={{width: '48px', height: '48px'}} />;
               } else {
                 return (
                   <Image
                     src={iconSource}
-                    width="32"
-                    height="32"
+                    width="48"
+                    height="48"
                     alt={draggingFixture.name}
                   />
                 );
               }
             })()}
+            <div style={{
+              fontSize: '10px',
+              fontWeight: 600,
+              marginTop: '4px',
+              textAlign: 'center',
+              maxWidth: '70px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {draggingFixture.name.split(' ')[0]}
+            </div>
           </div>
         )}
       </>
