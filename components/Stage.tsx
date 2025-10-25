@@ -617,14 +617,16 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
             {/* Grid */}
             {grid}
 
-            {/* Title - positioned above the stage */}
+            {/* Title - centered above the stage */}
             <Text
               text={title}
-              x={stageX}
-              y={stageY - 60}
+              x={0}
+              y={stageY - 40}
+              width={width}
               fontSize={24}
               fontStyle="bold"
               fill="#0f172a"
+              align="center"
             />
 
             {/* Stage Plan */}
