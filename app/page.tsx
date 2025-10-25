@@ -44,7 +44,52 @@ export default function Home() {
     const h = 1200 / (16 / 9);
     setStageSize({ width: w, height: h });
     baseStageWidthRef.current = w;
-  }, []);
+
+    // Listen for touch drag events from Library component
+    const handleFixtureDropped = (e: any) => {
+      const { fixture, x, y } = e.detail;
+      
+      // Get stage element and calculate relative position
+      const stage = stageRef.current;
+      if (stage) {
+        const stageContainer = stage.container();
+        const rect = stageContainer.getBoundingClientRect();
+        const relativeX = (x - rect.left) / stageScale;
+        const relativeY = (y - rect.top) / stageScale;
+        
+        // Add fixture at touch position
+        const newItem: Item = {
+          id: fixture.id,
+          name: fixture.name,
+          powerW: fixture.powerW,
+          icon: fixture.icon,
+          defaultMode: fixture.defaultMode,
+          modes: fixture.modes,
+          x: relativeX,
+          y: relativeY,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          uid: Math.random().toString(36).substr(2, 9),
+          universe: 1,
+          address: 1,
+          channels: channelsFrom(fixture.defaultMode),
+          number: fixture.id === 'vara' ? null : getNextFixtureNumber(),
+          groupId: selectedGroup,
+        };
+        setItems([...items, newItem]);
+        
+        // Close sidebar after adding
+        setLeftSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('fixtureDropped', handleFixtureDropped);
+    
+    return () => {
+      window.removeEventListener('fixtureDropped', handleFixtureDropped);
+    };
+  }, [items, selectedGroup, stageScale]);
 
   const handleSizeChange = (newWidth: number) => {
     const base = baseStageWidthRef.current || stageSize.width || 1200;
