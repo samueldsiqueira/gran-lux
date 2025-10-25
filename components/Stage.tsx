@@ -510,7 +510,8 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
     const stageWidth = 7.72 * ppu;
     const stageHeight = 4.72 * ppu;
     const stageX = (width - stageWidth) / 2;
-    const stageY = (height - stageHeight) / 2 - (1.5 * ppu) / 2;
+    // Add more space at top for title (moved down by 40px)
+    const stageY = (height - stageHeight) / 2 - (1.5 * ppu) / 2 + 40;
 
     const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
 
@@ -616,13 +617,14 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
             {/* Grid */}
             {grid}
 
-            {/* Title */}
+            {/* Title - positioned above the stage */}
             <Text
               text={title}
-              x={10}
-              y={10}
+              x={stageX}
+              y={stageY - 60}
               fontSize={24}
               fontStyle="bold"
+              fill="#0f172a"
             />
 
             {/* Stage Plan */}
