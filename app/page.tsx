@@ -67,13 +67,26 @@ export default function Home() {
         const stageContainer = stage.container();
         const rect = stageContainer.getBoundingClientRect();
         
+        // Get the Layer to access the Group offset
+        const layer = stage.getLayers()[0];
+        const group = layer?.children?.[0]; // First Group in Layer
+        
         console.log('Stage rect:', rect);
         console.log('Stage scale:', stageScale);
+        console.log('Group offset:', group ? { x: group.x(), y: group.y() } : 'No group');
         
-        const relativeX = (x - rect.left) / stageScale;
-        const relativeY = (y - rect.top) / stageScale;
+        // Calculate relative position considering both scale and group offset
+        const offsetX = group ? group.x() : 0;
+        const offsetY = group ? group.y() : 0;
+        const scaleX = group ? group.scaleX() : stageScale;
+        const scaleY = group ? group.scaleY() : stageScale;
         
-        console.log('Relative position:', relativeX, relativeY);
+        // Convert screen coordinates to stage coordinates
+        const relativeX = (x - rect.left - offsetX) / scaleX;
+        const relativeY = (y - rect.top - offsetY) / scaleY;
+        
+        console.log('Calculated position:', relativeX, relativeY);
+        console.log('Will add item at coordinates:', { x: relativeX, y: relativeY });
         
         // Add fixture at touch position
         const newItem: Item = {
