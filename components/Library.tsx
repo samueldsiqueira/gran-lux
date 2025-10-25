@@ -1,5 +1,7 @@
 "use client";
+import React from 'react';
 import { FIXTURES, ICONS } from "../app/fixtures";
+import Image from "next/image";
 
 interface Fixture {
   id: string;
@@ -31,11 +33,11 @@ export function Library({
   selectedGroup,
   setSelectedGroup,
 }: LibraryProps) {
-  const handleDragStart = (e, fixture) => {
+  const handleDragStart = (e: React.DragEvent, fixture: Fixture) => {
     e.dataTransfer.setData("application/json", JSON.stringify(fixture));
 
-    const img = new Image();
-    const iconSource = ICONS[fixture.icon];
+    const img = new window.Image();
+    const iconSource = ICONS[fixture.icon as keyof typeof ICONS];
     if (iconSource.startsWith("<svg")) {
       img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`;
     } else {
@@ -97,12 +99,12 @@ export function Library({
             onDragStart={(e) => handleDragStart(e, fixture)}
           >
             {(() => {
-              const iconSource = ICONS[fixture.icon];
+              const iconSource = ICONS[fixture.icon as keyof typeof ICONS];
               if (iconSource.startsWith("<svg")) {
                 return <div dangerouslySetInnerHTML={{ __html: iconSource }} />;
               } else {
                 return (
-                  <img
+                  <Image
                     src={iconSource}
                     width="26"
                     height="26"

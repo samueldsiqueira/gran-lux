@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom/client";
@@ -14,22 +15,39 @@ import {
 } from "react-konva";
 import { ICONS } from "../app/fixtures";
 import useImage from "use-image";
+import { Item as ItemType } from "../app/types";
+import Konva from 'konva';
 
 const GRID_SIZE = 25; // denser grid
 const FRONT_OF_STAGE_MARGIN = 1.2;
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 
-const KonvaReactIcon = ({
-  IconComponent,
-  width,
-  height,
-  stroke,
-  strokeWidth,
-  isSelected,
+interface StageProps {
+  items: ItemType[];
+  title: string;
+  onDragEnd: (uid: string, x: number, y: number) => void;
+  onSelectItem: (uid: string | null) => void;
+  selectedItem: ItemType | null;
+  onUpdateItem: (uid: string, properties: Partial<ItemType>) => void;
+  onDrop: (fixture: ItemType, position: { x: number; y: number }, target: Konva.Node | null) => void;
+  width: number;
+  height: number;
+  onDragMove: (uid: string, x: number, y: number) => void;
+  scale?: number;
+  onScaleChange?: (scale: number) => void;
+}
+
+const KonvaReactIcon = ({ IconComponent, width, height, stroke, strokeWidth, isSelected }: {
+  IconComponent: React.ComponentType<{ size: number }>;
+  width: number;
+  height: number;
+  stroke: string;
+  strokeWidth: number;
+  isSelected: boolean;
 }) => {
-  const [image, setImage] = useState(null);
-  const containerRef = useRef(null);
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const container = document.createElement("div");
@@ -63,27 +81,76 @@ const KonvaReactIcon = ({
 
   return (
     <Image
-      image={image}
+      image={image || undefined}
       width={width}
       height={height}
-      stroke={isSelected ? stroke : null}
+      stroke={isSelected ? stroke : undefined}
       strokeWidth={isSelected ? strokeWidth : 0}
     />
   );
 };
 
-const FixtureImage = ({
-  item,
-  onDragEnd,
-  onSelectItem,
-  isSelected,
-  onTransformEnd,
-  shapeRef,
-  onDragMove,
+KonvaReactIcon.propTypes = {
+  IconComponent: PropTypes.elementType.isRequired,
+  width: PropTypes.number.isRequired,
+  height: PropTypes.number.isRequired,
+  stroke: PropTypes.string,
+  strokeWidth: PropTypes.number,
+  isSelected: PropTypes.bool,
+};
+
+const FixtureImage = ({ 
+  item, 
+  onDragEnd, 
+  onSelectItem, 
+  isSelected, 
+  onTransformEnd, 
+  shapeRef, 
+  onDragMove 
+}: {
+  item: ItemType;
+  onDragEnd: (uid: string, x: number, y: number) => void;
+  onSelectItem: (uid: string | null) => void;
+  isSelected: boolean;
+  onTransformEnd: (uid: string, updates: { x: number; y: number; rotation: number; scaleX: number; scaleY: number }) => void;
+  shapeRef: React.RefObject<any>;
+  onDragMove: (uid: string, x: number, y: number) => void;
 }) => {
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
   };
+
+  const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
+    onDragMove(item.uid, e.target.x(), e.target.y());
+  };
+
+  const handleTransformEnd = () => {
+    if (shapeRef.current) {
+      onTransformEnd(item.uid, {
+        x: shapeRef.current.x(),
+        y: shapeRef.current.y(),
+        rotation: shapeRef.current.rotation(),
+        scaleX: shapeRef.current.scaleX(),
+        scaleY: shapeRef.current.scaleY(),
+      });
+    }
+  };
+
+  const iconSource = item.icon ? ICONS[item.icon as keyof typeof ICONS] : null;
+  const imageUrl = iconSource?.startsWith("<svg")
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
+    : iconSource;
+
+  const [image, status] = useImage(imageUrl || '');
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    if (status === "loaded") {
+      setImageLoaded(true);
+    } else if (status === "loading" || status === "failed") {
+      setImageLoaded(false);
+    }
+  }, [status]);
 
   if (item.componentIcon) {
     if (
@@ -102,12 +169,12 @@ const FixtureImage = ({
         y={item.y}
         draggable
         onDragEnd={handleDragEnd}
-        onDragMove={onDragMove}
+        onDragMove={handleDragMove}
         onMouseDown={(e) => {
           e.cancelBubble = true;
           onSelectItem(item.uid);
         }}
-        onTransformEnd={() => onTransformEnd(shapeRef.current)}
+        onTransformEnd={handleTransformEnd}
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
@@ -130,22 +197,6 @@ const FixtureImage = ({
       return null;
     }
 
-    const iconSource = ICONS[item.icon];
-    const imageUrl = iconSource.startsWith("<svg")
-      ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconSource)}`
-      : iconSource;
-
-    const [image, status] = useImage(imageUrl);
-    const [imageLoaded, setImageLoaded] = useState(false);
-
-    useEffect(() => {
-      if (status === "loaded") {
-        setImageLoaded(true);
-      } else if (status === "loading" || status === "failed") {
-        setImageLoaded(false);
-      }
-    }, [status]);
-
     return (
       <Group
         ref={shapeRef}
@@ -155,12 +206,12 @@ const FixtureImage = ({
         y={item.y}
         draggable
         onDragEnd={handleDragEnd}
-        onDragMove={onDragMove}
+        onDragMove={handleDragMove}
         onMouseDown={(e) => {
           e.cancelBubble = true;
           onSelectItem(item.uid);
         }}
-        onTransformEnd={() => onTransformEnd(shapeRef.current)}
+        onTransformEnd={handleTransformEnd}
         rotation={item.rotation}
         scaleX={item.scaleX || 1}
         scaleY={item.scaleY || 1}
@@ -173,7 +224,7 @@ const FixtureImage = ({
             image={image}
             width={50}
             height={50}
-            stroke={isSelected ? "#0ea5e9" : null}
+            stroke={isSelected ? "#0ea5e9" : undefined}
             strokeWidth={2}
           />
         ) : (
@@ -200,18 +251,44 @@ const FixtureImage = ({
   }
 };
 
-const Vara = ({
-  item,
-  onDragEnd,
-  onSelectItem,
-  isSelected,
-  onTransformEnd,
-  shapeRef,
-  ppu,
-  onDragMove,
+FixtureImage.propTypes = {
+  item: PropTypes.object.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  onSelectItem: PropTypes.func.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onTransformEnd: PropTypes.func.isRequired,
+  shapeRef: PropTypes.object.isRequired,
+  onDragMove: PropTypes.func.isRequired,
+};
+
+const Vara = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shapeRef, ppu, onDragMove }: {
+  item: ItemType;
+  onDragEnd: (uid: string, x: number, y: number) => void;
+  onSelectItem: (uid: string | null) => void;
+  isSelected: boolean;
+  onTransformEnd: any;
+  shapeRef: React.RefObject<any>;
+  ppu: number;
+  onDragMove: (uid: string, x: number, y: number) => void;
 }) => {
-  const handleDragEnd = (e) => {
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     onDragEnd(item.uid, e.target.x(), e.target.y());
+  };
+
+  const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
+    onDragMove(item.uid, e.target.x(), e.target.y());
+  };
+
+  const handleTransformEnd = () => {
+    if (shapeRef.current) {
+      onTransformEnd(item.uid, {
+        x: shapeRef.current.x(),
+        y: shapeRef.current.y(),
+        rotation: shapeRef.current.rotation(),
+        scaleX: shapeRef.current.scaleX(),
+        scaleY: shapeRef.current.scaleY(),
+      });
+    }
   };
 
   const width = 7.72 * ppu;
@@ -228,14 +305,14 @@ const Vara = ({
       height={height}
       fill="black"
       draggable
-      onDragMove={onDragMove}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onMouseDown={(e) => {
         e.cancelBubble = true;
         onSelectItem(item.uid);
       }}
-      onTransformEnd={() => onTransformEnd(shapeRef.current)}
-      stroke={isSelected ? "#0ea5e9" : null}
+      onTransformEnd={handleTransformEnd}
+      stroke={isSelected ? "#0ea5e9" : undefined}
       strokeWidth={isSelected ? 5 : 0}
       rotation={item.rotation}
       scaleX={item.scaleX || 1}
@@ -246,16 +323,26 @@ const Vara = ({
   );
 };
 
-const Item = ({
-  item,
-  onDragEnd,
-  onSelectItem,
-  isSelected,
-  onTransformEnd,
-  shapeRef,
-  ppu,
-  onDragMove,
-  items,
+Vara.propTypes = {
+  item: PropTypes.object.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  onSelectItem: PropTypes.func.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onTransformEnd: PropTypes.func.isRequired,
+  shapeRef: PropTypes.object.isRequired,
+  ppu: PropTypes.number.isRequired,
+  onDragMove: PropTypes.func.isRequired,
+};
+
+const Item = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shapeRef, ppu, onDragMove }: {
+  item: ItemType;
+  onDragEnd: (uid: string, x: number, y: number) => void;
+  onSelectItem: (uid: string | null) => void;
+  isSelected: boolean;
+  onTransformEnd: any;
+  shapeRef: React.RefObject<any>;
+  ppu: number;
+  onDragMove: (uid: string, x: number, y: number) => void;
 }) => {
   if (item.id === "vara") {
     return (
@@ -280,12 +367,23 @@ const Item = ({
       onTransformEnd={onTransformEnd}
       shapeRef={shapeRef}
       onDragMove={onDragMove}
-      items={items}
     />
   );
 };
 
-const Stage = React.forwardRef(
+Item.propTypes = {
+  item: PropTypes.object.isRequired,
+  onDragEnd: PropTypes.func.isRequired,
+  onSelectItem: PropTypes.func.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onTransformEnd: PropTypes.func.isRequired,
+  shapeRef: PropTypes.object.isRequired,
+  ppu: PropTypes.number,
+  onDragMove: PropTypes.func.isRequired,
+  items: PropTypes.array.isRequired,
+};
+
+const Stage = React.forwardRef<Konva.Stage, StageProps>(
   (
     {
       items,
@@ -303,10 +401,10 @@ const Stage = React.forwardRef(
     },
     ref,
   ) => {
-    const containerRef = useRef(null);
-    const trRef = React.useRef();
-    const shapeRefs = React.useRef({});
-    const layerRef = React.useRef(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const trRef = React.useRef<Konva.Transformer | null>(null);
+    const shapeRefs = React.useRef<Record<string, any>>({});
+    const layerRef = React.useRef<Konva.Layer | null>(null);
     const [offset, setOffset] = React.useState({ x: 0, y: 0 });
     const isPanningRef = React.useRef(false);
     const isSpacePressedRef = React.useRef(false);
@@ -358,15 +456,15 @@ const Stage = React.forwardRef(
         const selectedNode = shapeRefs.current[selectedItem.uid]?.current;
         if (selectedNode) {
           trRef.current.nodes([selectedNode]);
-          trRef.current.getLayer().batchDraw();
+          trRef.current.getLayer()?.batchDraw();
         }
       } else if (trRef.current) {
         trRef.current.nodes([]);
-        trRef.current.getLayer().batchDraw();
+        trRef.current.getLayer()?.batchDraw();
       }
     }, [selectedItem]);
 
-    const handleTransformEnd = (node) => {
+    const handleTransformEnd = (node: any) => {
       onUpdateItem(node.id(), {
         x: node.x(),
         y: node.y(),
@@ -376,15 +474,16 @@ const Stage = React.forwardRef(
       });
     };
 
-    const handleDragOver = (e) => {
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
     };
 
-    const handleDrop = (e) => {
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const data = e.dataTransfer.getData("application/json");
       if (!data) return;
       const fixture = JSON.parse(data);
+      if (!ref || typeof ref === 'function') return;
       const stage = ref.current;
       if (!stage) return;
       const rect = stage.container().getBoundingClientRect();
@@ -524,8 +623,7 @@ const Stage = React.forwardRef(
                   onTransformEnd={handleTransformEnd}
                   shapeRef={shapeRefs.current[item.uid]}
                   ppu={ppu}
-                  onDragMove={(e) => onDragMove(item.uid, e.target.x(), e.target.y())}
-                  items={items}
+                  onDragMove={onDragMove}
                 />
               );
             })}
@@ -544,7 +642,7 @@ const Stage = React.forwardRef(
                   onTransformEnd={handleTransformEnd}
                   shapeRef={shapeRefs.current[item.uid]}
                   ppu={ppu}
-                  onDragMove={(e) => onDragMove(item.uid, e.target.x(), e.target.y())}
+                  onDragMove={onDragMove}
                 />
               );
             })}
@@ -572,5 +670,7 @@ const Stage = React.forwardRef(
     );
   },
 );
+
+Stage.displayName = 'Stage';
 
 export default Stage;

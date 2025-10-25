@@ -5,43 +5,23 @@ import TopBar from '../components/TopBar';
 import { Library } from '../components/Library';
 import Properties from '../components/Properties';
 import dynamic from 'next/dynamic';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ICONS } from '../app/fixtures';
+import { Item } from '../app/types';
+import Konva from 'konva';
 
 const Stage = dynamic(() => import('../components/Stage'), { ssr: false });
 
-interface Item {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  rotation: number;
-  scaleX: number;
-  scaleY: number;
-  uid: string;
-  universe: number;
-  address: number;
-  channels: number;
-  number: number | null;
-  groupId: string | null;
-  connectedTo?: string | null;
-  markerNumber?: number;
-  color?: string;
-  icon?: string;
-  defaultMode?: string;
-  powerW?: number;
-}
-
-function channelsFrom(mode: string) {
+function channelsFrom(mode: string | undefined) {
   const m = /([0-9]+)\s*ch/i.exec(mode || '');
-  return m ? parseInt(m[1], 10) : mode.includes('dimmer') ? 1 : 1;
+  return m ? parseInt(m[1], 10) : (mode || '').includes('dimmer') ? 1 : 1;
 }
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [clipboard, setClipboard] = useState<Item | null>(null);
-  const stageRef = useRef(null);
+  const stageRef = useRef<Konva.Stage>(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [stageScale, setStageScale] = useState(1);
   const baseStageWidthRef = useRef<number | null>(null);
@@ -73,10 +53,10 @@ export default function Home() {
     setStageSize({ width: base, height: newHeight });
   };
 
-  const getNextFixtureNumber = () => {
+  const getNextFixtureNumber = useCallback(() => {
     const numbers = items.filter(item => item.number).map(item => item.number as number);
     return numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
-  };
+  }, [items]);
 
   // Helpers for snapping to a vara (supports rotation)
   const getPPU = () => (stageSize.width || 1200) / 12;
@@ -143,6 +123,42 @@ export default function Home() {
       return item;
     });
   };
+  const handleCopy = useCallback(() => {
+    if (selectedItem) {
+      setClipboard(selectedItem);
+    }
+  }, [selectedItem]);
+
+  const handlePaste = useCallback(() => {
+    if (clipboard) {
+      const newItem: Item = {
+        ...clipboard,
+        x: clipboard.x + 20,
+        y: clipboard.y + 20,
+        uid: Math.random().toString(36).substr(2, 9),
+        number: clipboard.id === 'vara' ? null : getNextFixtureNumber(),
+      };
+      setItems([...items, newItem]);
+    }
+  }, [clipboard, items, getNextFixtureNumber]);
+
+  const handleCut = useCallback(() => {
+    if (selectedItem) {
+      setClipboard(selectedItem);
+      const newItems = items.filter((item) => item.uid !== selectedItem.uid);
+      const renumberedItems = renumberFixtures(newItems);
+      setItems(renumberedItems);
+      setSelectedItem(null);
+    }
+  }, [selectedItem, items]);
+
+  const handleRemoveSelected = useCallback(() => {
+    if (!selectedItem) return;
+    const newItems = items.filter((item) => item.uid !== selectedItem.uid);
+    const renumberedItems = renumberFixtures(newItems);
+    setItems(renumberedItems);
+    setSelectedItem(null);
+  }, [selectedItem, items]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -169,36 +185,7 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedItem, clipboard, items]);
-
-  const handleCopy = () => {
-    if (selectedItem) {
-      setClipboard(selectedItem);
-    }
-  };
-
-  const handlePaste = () => {
-    if (clipboard) {
-      const newItem: Item = {
-        ...clipboard,
-        x: clipboard.x + 20,
-        y: clipboard.y + 20,
-        uid: Math.random().toString(36).substr(2, 9),
-        number: clipboard.id === 'vara' ? null : getNextFixtureNumber(),
-      };
-      setItems([...items, newItem]);
-    }
-  };
-
-  const handleCut = () => {
-    if (selectedItem) {
-      setClipboard(selectedItem);
-      const newItems = items.filter((item) => item.uid !== selectedItem.uid);
-      const renumberedItems = renumberFixtures(newItems);
-      setItems(renumberedItems);
-      setSelectedItem(null);
-    }
-  };
+  }, [selectedItem, clipboard, items, handleCopy, handleCut, handlePaste, handleRemoveSelected]);
 
   const handleAddGroup = (name: string) => {
     const newGroup = {
@@ -208,9 +195,14 @@ export default function Home() {
     setGroups([...groups, newGroup]);
   };
 
-  const handleAddItem = (fixture: any, groupId: string | null) => {
+  const handleAddItem = (fixture: { id: string; name: string; powerW: number; icon: string; modes: string[]; defaultMode: string }, groupId: string | null) => {
     const newItem: Item = {
-      ...fixture,
+      id: fixture.id,
+      name: fixture.name,
+      powerW: fixture.powerW,
+      icon: fixture.icon,
+      defaultMode: fixture.defaultMode,
+      modes: fixture.modes,
       x: 100,
       y: 100,
       rotation: 0,
@@ -226,15 +218,17 @@ export default function Home() {
     setItems([...items, newItem]);
   };
 
-  const handleDrop = (fixture: any, position: { x: number; y: number }, target: any) => {
+  const handleDrop = (fixture: Item, position: { x: number; y: number }, target: Konva.Node | null) => {
     let connectedTo: string | null = null;
     // Descobre se drop foi sobre uma vara
-    let node = target;
+    let node: Konva.Node | null = target;
     try {
       while (node && (!node.attrs || !node.attrs.name) && node.getParent) {
         node = node.getParent();
       }
-    } catch (e) {}
+    } catch {
+      // ignore errors
+    }
     if (node && node.attrs && node.attrs.name === 'vara') {
       connectedTo = node.attrs.id; // uid da vara
     }
@@ -386,14 +380,6 @@ export default function Home() {
     setItems(updated);
   };
 
-  const handleRemoveSelected = () => {
-    if (!selectedItem) return;
-    const newItems = items.filter((item) => item.uid !== selectedItem.uid);
-    const renumberedItems = renumberFixtures(newItems);
-    setItems(renumberedItems);
-    setSelectedItem(null);
-  };
-
   const handleSendToBack = () => {
     if (!selectedItem) return;
     const newItems = items.filter((item) => item.uid !== selectedItem.uid);
@@ -414,7 +400,7 @@ export default function Home() {
       const need = Math.max(1, item.channels || 1);
 
       if (addr + need - 1 > 512) {
-        let nu = u + 1;
+        const nu = u + 1;
         if (!nextAddr.has(nu)) nextAddr.set(nu, 1);
         addr = nextAddr.get(nu);
         if (addr) {
@@ -440,7 +426,7 @@ export default function Home() {
     a.click();
   };
 
-  const handleImportJSON = (data: any) => {
+  const handleImportJSON = (data: { items: Item[], title: string, groups: { id: string, name: string }[] }) => {
     setItems(data.items || []);
     setTitle(data.title || 'Meu Espetáculo');
     setGroups(data.groups || []);
@@ -475,7 +461,7 @@ export default function Home() {
 
     const exportImage = (mimeType: string, extension: string, output = 'download') => {
     return new Promise<string>((resolve, reject) => {
-      const stage = stageRef.current as any;
+      const stage = stageRef.current as Konva.Stage;
       const pixelRatio = 3;
       const stageDataURL = stage.toDataURL({ pixelRatio });
 
@@ -519,7 +505,7 @@ export default function Home() {
         }
 
         const iconPromises = fixtures.map(fixture => {
-          return new Promise((resolve, reject) => {
+          return new Promise<{ iconImage: HTMLImageElement, fixture: Item }>((resolve, reject) => {
             const iconImage = new window.Image();
             iconImage.onload = () => resolve({ iconImage, fixture });
             iconImage.onerror = reject;
@@ -532,8 +518,8 @@ export default function Home() {
           });
         });
 
-        Promise.all(iconPromises).then((loadedIcons: any) => {
-          loadedIcons.forEach(({ iconImage, fixture }: any, index: number) => {
+        Promise.all(iconPromises).then((loadedIcons: { iconImage: HTMLImageElement, fixture: Item }[]) => {
+          loadedIcons.forEach(({ iconImage, fixture }: { iconImage: HTMLImageElement, fixture: Item }, index: number) => {
             const columnIndex = Math.floor(index / itemsPerColumn);
             const rowIndex = index % itemsPerColumn;
             const xPos = (10 + columnIndex * columnWidth) * pixelRatio;

@@ -1,4 +1,18 @@
 "use client";
+import { Item } from '../app/types';
+
+import React from 'react';
+
+interface TopBarProps {
+  title: string;
+  onTitleChange: (title: string) => void;
+  onExportJSON: () => void;
+  onImportJSON: (data: { items: Item[], title: string, groups: { id: string, name: string }[] }) => void;
+  onExportCSV: () => void;
+  onExportPNG: () => void;
+  onExportJPEG: () => void;
+  onPrintRider: () => void;
+}
 
 export default function TopBar({
   title,
@@ -9,16 +23,18 @@ export default function TopBar({
   onExportPNG,
   onExportJPEG,
   onPrintRider,
-}) {
-  const handleImport = (e) => {
-    const file = e.target.files[0];
+}: TopBarProps) {
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = (ev: ProgressEvent<FileReader>) => {
       try {
-        const data = JSON.parse(ev.target.result);
-        onImportJSON(data);
-      } catch (e) {
+        if (ev.target?.result) {
+          const data = JSON.parse(ev.target.result as string);
+          onImportJSON(data);
+        }
+      } catch {
         alert("Arquivo inválido");
       }
     };

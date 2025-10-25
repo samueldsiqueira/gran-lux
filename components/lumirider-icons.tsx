@@ -43,7 +43,6 @@ export type IconProps = {
   title?: string;
 };
 
-const withMemo = <P extends object>(Comp: React.FC<P>) => React.memo(Comp);
 
 function Frame({
   id,
@@ -137,7 +136,7 @@ export const FresnelIcon = (props: IconProps) => (
       fill={`url(#fresnel-metal)`}
     />
   </Frame>
-));
+);
 
 export const ElipsoidalIcon = (props: IconProps) => (
   <Frame
@@ -178,7 +177,7 @@ export const ElipsoidalIcon = (props: IconProps) => (
     {/* Lente frontal suave */}
     <circle cx={84} cy={58} r={8} fill={`url(#elip-lens)`} />
   </Frame>
-));
+);
 
 export const ParLedIcon = (props: IconProps) => (
   <Frame id="parled" title={props.title ?? "PAR LED"} {...props}>
@@ -211,7 +210,7 @@ export const ParLedIcon = (props: IconProps) => (
     {/* Yoke */}
     <path d="M24 38 q-6 8 0 16 M64 38 q6 8 0 16" />
   </Frame>
-));
+);
 
 export const Par64Icon = (props: IconProps) => (
   <Frame id="par64" title={props.title ?? "PAR 64"} {...props}>
@@ -226,7 +225,7 @@ export const Par64Icon = (props: IconProps) => (
     <circle cx={79} cy={58} r={18} fill={`url(#par64-lens)`} />
     <path d="M22 40 l8 12 M22 74 l8 -12" />
   </Frame>
-));
+);
 
 export const SetLightIcon = (props: IconProps) => (
   <Frame id="set" title={props.title ?? "Luz de Set (Open Face)"} {...props}>
@@ -242,7 +241,7 @@ export const SetLightIcon = (props: IconProps) => (
     <path d="M34 44 v30 M48 44 v30 M62 44 v30 M76 44 v30" />
     <path d="M18 42 l8 10 M18 76 l8 -10" />
   </Frame>
-));
+);
 
 export const FogMachineIcon = (props: IconProps) => (
   <Frame id="fog" title={props.title ?? "Máquina de Fumaça"} {...props}>
@@ -263,7 +262,7 @@ export const FogMachineIcon = (props: IconProps) => (
     {/* alça */}
     <path d="M30 58 v-6 h14" />
   </Frame>
-));
+);
 
 export const DimmerPackIcon = (props: IconProps) => (
   <Frame id="dimmer" title={props.title ?? "Dimmer Pack"} {...props}>
@@ -309,7 +308,7 @@ export const DimmerPackIcon = (props: IconProps) => (
       fill={`url(#dimmer-metal)`}
     />
   </Frame>
-));
+);
 
 export const LightingConsoleIcon = (props: IconProps) => (
   <Frame id="console" title={props.title ?? "Mesa de Luz (Console)"} {...props}>
@@ -333,7 +332,7 @@ export const LightingConsoleIcon = (props: IconProps) => (
     <circle cx={36} cy={58} r={3} />
     <circle cx={88} cy={58} r={3} />
   </Frame>
-));
+);
 
 export const varaIcon = (props: IconProps) => (
   <Frame id="vara" title={props.title ?? "Espinha / vara"} {...props}>
@@ -347,7 +346,7 @@ export const varaIcon = (props: IconProps) => (
     />
     <path d="M22 50 l84 16 M22 70 l84 -16 M46 46 v24 M82 46 v24" />
   </Frame>
-));
+);
 
 export const TBarIcon = (props: IconProps) => (
   <Frame id="tbar" title={props.title ?? "Arara (T-Bar)"} {...props}>
@@ -355,7 +354,7 @@ export const TBarIcon = (props: IconProps) => (
     <path d="M34 28 h60" />
     <path d="M64 92 l-22 16 M64 92 l22 16" />
   </Frame>
-));
+);
 
 export const TripodLowIcon = (props: IconProps) => (
   <Frame
@@ -367,7 +366,7 @@ export const TripodLowIcon = (props: IconProps) => (
     <path d="M64 72 v-24" />
     <path d="M64 72 l-22 12 M64 72 l22 12 M64 72 v18" />
   </Frame>
-));
+);
 
 export const TripodHighIcon = (props: IconProps) => (
   <Frame
@@ -379,7 +378,7 @@ export const TripodHighIcon = (props: IconProps) => (
     <path d="M64 26 v60" />
     <path d="M64 86 l-24 16 M64 86 l24 16 M64 86 v18" />
   </Frame>
-));
+);
 
 export const RibaltaIcon = (props: IconProps) => (
   <Frame id="ribalta" title={props.title ?? "Ribalta"} {...props}>
@@ -402,7 +401,7 @@ export const RibaltaIcon = (props: IconProps) => (
     ))}
     <path d="M24 60 v-10 M48 60 v-10 M72 60 v-10 M96 60 v-10" />
   </Frame>
-));
+);
 
 // =============== DEMOS RÁPIDOS ===============
 // Exemplo de grid showcase (opcional)
@@ -441,9 +440,3 @@ export const LumiRiderIconShowcase: React.FC<{ size?: number | string }> = ({
     </div>
   );
 };
-
-// =============== NOTAS ===============
-// • Para otimizar ainda mais, converta para <symbol> e use via <use> se precisar de centenas de instâncias.
-// • Para mapear canal/DMX no seu sistema, basta compor com um label/tooltip ao redor do ícone.
-// • Se quiser versões "cheias" (filled), aplique fill="currentColor" em grupos específicos.
-// • Para rotação/espelhamento use as props rotate/mirrored.

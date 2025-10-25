@@ -1,3 +1,4 @@
+import React from 'react';
 import InfiniteGridCanvas from "@/components/InfiniteGridCanvas";
 
 export default function Page() {

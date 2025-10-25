@@ -1,10 +1,20 @@
 "use client";
+import React from 'react';
 
 import { ICONS } from "../app/fixtures";
+import { Item } from "../app/types";
 
 const PPU = 100;
 
-export default function Properties({ selectedItem, onUpdateItem, onSendToBack, groups, onApplyMarkerToGroup }) {
+interface PropertiesProps {
+  selectedItem: Item | null;
+  onUpdateItem: (uid: string, properties: Partial<Item>) => void;
+  onSendToBack: () => void;
+  groups: { id: string; name: string }[];
+  onApplyMarkerToGroup: () => void;
+}
+
+export default function Properties({ selectedItem, onUpdateItem, onSendToBack, groups, onApplyMarkerToGroup }: PropertiesProps) {
   if (!selectedItem) {
     return (
       <div className="card pad">
@@ -14,15 +24,15 @@ export default function Properties({ selectedItem, onUpdateItem, onSendToBack, g
     );
   }
 
-  const handleNameChange = (e) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdateItem(selectedItem.uid, { name: e.target.value });
   };
 
-  const handleRotationChange = (e) => {
+  const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdateItem(selectedItem.uid, { rotation: parseInt(e.target.value) });
   };
 
-  const handleSizeChange = (e) => {
+  const handleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const originalWidth = selectedItem.id === "vara" ? 7.72 * PPU : 50;
     const originalHeight = selectedItem.id === "vara" ? 10 : 50;
