@@ -50,11 +50,6 @@ export default function InfiniteGridCanvas({
     return { wx: (sx - x) / z, wy: (sy - y) / z };
   }, []);
 
-  const worldToScreen = useCallback((wx: number, wy: number) => {
-    const { x, y, z } = camRef.current;
-    return { sx: wx * z + x, sy: wy * z + y };
-  }, []);
-
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;

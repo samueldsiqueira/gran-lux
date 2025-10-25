@@ -447,36 +447,3 @@ export const LumiRiderIconShowcase: React.FC<{ size?: number | string }> = ({
 // • Para mapear canal/DMX no seu sistema, basta compor com um label/tooltip ao redor do ícone.
 // • Se quiser versões "cheias" (filled), aplique fill="currentColor" em grupos específicos.
 // • Para rotação/espelhamento use as props rotate/mirrored.
-
-// usam SVG 128×128 com gradientes (metal + lente), soft shadow e detalhes sólidos;
-
-// expõem props padrão (size, strokeWidth, rotate, mirrored, className);
-
-// herdam cor via currentColor e aceitam CSS Variables para metal/vidro/LED/smoke (você estiliza no seu tema);
-
-// são memoizados para render leve.
-
-// Como usar no Next.js:
-
-// import { FresnelIcon, ParLedIcon } from "@/components/lumirider-icons";
-
-// export default function Toolbox() {
-//   return (
-//     <div className="flex gap-6 text-zinc-800">
-//       <FresnelIcon size={72} />
-//       <ParLedIcon size={72} className="text-slate-700" />
-//     </div>
-//   );
-// }
-
-// CSS (override de materiais):
-
-// :root{
-//   --lr-stroke:#2b2f33;
-//   --lr-metal-light:#e6e9ef; --lr-metal-mid:#aab2bd; --lr-metal-dark:#6b7280;
-//   --lr-lens-inner:#38bdf8; --lr-lens-outer:#7dd3fc;
-//   --lr-smoke:#cbd5e1;
-//   --lr-led-red:#ef4444; --lr-led-green:#22c55e; --lr-led-blue:#3b82f6;
-// }
-
-// Quer que eu avance com o restante da lista (PC, Bandôr/Refletor, Gelatinas, Ciclorama, Vara frontal/fixa/mecanizada, Série/Paralelo/Prolonga etc.) no mesmo padrão? Se sim, digo sim e eu já complemento no mesmo arquivo com +15–20 componentes e versões “filled” (mais sólidas) para quando você precisar de miniaturas bem legíveis.

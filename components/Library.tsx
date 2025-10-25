@@ -1,9 +1,18 @@
 "use client";
 import { FIXTURES, ICONS } from "../app/fixtures";
 
+interface Fixture {
+  id: string;
+  name: string;
+  powerW: number;
+  icon: string;
+  modes: string[];
+  defaultMode: string;
+}
+
 interface LibraryProps {
   onSizeChange: (size: number) => void;
-  onAddItem: (fixture: any, groupId: string | null) => void;
+  onAddItem: (fixture: Fixture, groupId: string | null) => void;
   onRemoveSelected: () => void;
   onAutoPatch: () => void;
   onAddGroup: (name: string) => void;

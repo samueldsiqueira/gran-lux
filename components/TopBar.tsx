@@ -18,7 +18,7 @@ export default function TopBar({
       try {
         const data = JSON.parse(ev.target.result);
         onImportJSON(data);
-      } catch (err) {
+      } catch (e) {
         alert("Arquivo inválido");
       }
     };

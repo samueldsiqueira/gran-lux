@@ -9,7 +9,6 @@ import {
   Line,
   Image,
   Circle,
-  Arc,
   Transformer,
   Group,
 } from "react-konva";
@@ -291,7 +290,6 @@ const Stage = React.forwardRef(
     {
       items,
       title,
-      groups,
       onDragEnd,
       onSelectItem,
       selectedItem,

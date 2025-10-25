@@ -10,22 +10,44 @@ import { ICONS } from '../app/fixtures';
 
 const Stage = dynamic(() => import('../components/Stage'), { ssr: false });
 
-function channelsFrom(mode) {
+interface Item {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  rotation: number;
+  scaleX: number;
+  scaleY: number;
+  uid: string;
+  universe: number;
+  address: number;
+  channels: number;
+  number: number | null;
+  groupId: string | null;
+  connectedTo?: string | null;
+  markerNumber?: number;
+  color?: string;
+  icon?: string;
+  defaultMode?: string;
+  powerW?: number;
+}
+
+function channelsFrom(mode: string) {
   const m = /([0-9]+)\s*ch/i.exec(mode || '');
   return m ? parseInt(m[1], 10) : mode.includes('dimmer') ? 1 : 1;
 }
 
 export default function Home() {
-  const [items, setItems] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [clipboard, setClipboard] = useState(null);
+  const [items, setItems] = useState<Item[]>([]);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [clipboard, setClipboard] = useState<Item | null>(null);
   const stageRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [stageScale, setStageScale] = useState(1);
   const baseStageWidthRef = useRef<number | null>(null);
   const [title, setTitle] = useState('Meu Espetáculo');
-  const [groups, setGroups] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
 
   // Snap/geometry constants
   const ICON_SIZE = 26;
@@ -42,7 +64,7 @@ export default function Home() {
     baseStageWidthRef.current = w;
   }, []);
 
-  const handleSizeChange = (newWidth) => {
+  const handleSizeChange = (newWidth: number) => {
     const base = baseStageWidthRef.current || stageSize.width || 1200;
     const newScale = newWidth / base;
     setStageScale(newScale);
@@ -52,16 +74,16 @@ export default function Home() {
   };
 
   const getNextFixtureNumber = () => {
-    const numbers = items.filter(item => item.number).map(item => item.number);
+    const numbers = items.filter(item => item.number).map(item => item.number as number);
     return numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
   };
 
   // Helpers for snapping to a vara (supports rotation)
   const getPPU = () => (stageSize.width || 1200) / 12;
 
-  const varaDims = (ppu) => ({ width: VARA_LENGTH_M * ppu, height: VARA_HEIGHT });
+  const varaDims = (ppu: number) => ({ width: VARA_LENGTH_M * ppu, height: VARA_HEIGHT });
 
-  const toLocal = (vara, point) => {
+  const toLocal = (vara: Item, point: { x: number; y: number }) => {
     const angle = ((vara.rotation || 0) * Math.PI) / 180;
     const dx = point.x - vara.x;
     const dy = point.y - vara.y;
@@ -71,7 +93,7 @@ export default function Home() {
     return { x: cos * dx + sin * dy, y: -sin * dx + cos * dy };
   };
 
-  const toWorld = (vara, local) => {
+  const toWorld = (vara: Item, local: { x: number; y: number }) => {
     const angle = ((vara.rotation || 0) * Math.PI) / 180;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
@@ -81,7 +103,7 @@ export default function Home() {
     };
   };
 
-  const snapOnVara = (vara, point) => {
+  const snapOnVara = (vara: Item, point: { x: number; y: number }) => {
     const ppu = getPPU();
     const { width, height } = varaDims(ppu);
     const local = toLocal(vara, point);
@@ -98,7 +120,7 @@ export default function Home() {
     return toWorld(vara, { x: lx, y: ly });
   };
 
-  const isNearVara = (vara, point) => {
+  const isNearVara = (vara: Item, point: { x: number; y: number }) => {
     const ppu = getPPU();
     const { width, height } = varaDims(ppu);
     const local = toLocal(vara, point);
@@ -107,23 +129,23 @@ export default function Home() {
     return withinX && nearY;
   };
 
-  const renumberFixtures = (currentItems) => {
-    const fixtures = currentItems.filter(item => item.id !== 'vara').sort((a, b) => a.number - b.number);
-    const fixtureMap = new Map();
+  const renumberFixtures = (currentItems: Item[]) => {
+    const fixtures = currentItems.filter(item => item.id !== 'vara').sort((a, b) => (a.number || 0) - (b.number || 0));
+    const fixtureMap = new Map<string, number>();
     fixtures.forEach((fixture, index) => {
       fixtureMap.set(fixture.uid, index + 1);
     });
 
     return currentItems.map(item => {
       if (fixtureMap.has(item.uid)) {
-        return { ...item, number: fixtureMap.get(item.uid) };
+        return { ...item, number: fixtureMap.get(item.uid) || null };
       }
       return item;
     });
   };
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
           case 'c':
@@ -157,7 +179,7 @@ export default function Home() {
 
   const handlePaste = () => {
     if (clipboard) {
-      const newItem = {
+      const newItem: Item = {
         ...clipboard,
         x: clipboard.x + 20,
         y: clipboard.y + 20,
@@ -178,7 +200,7 @@ export default function Home() {
     }
   };
 
-  const handleAddGroup = (name) => {
+  const handleAddGroup = (name: string) => {
     const newGroup = {
       id: Math.random().toString(36).substr(2, 9),
       name,
@@ -186,8 +208,8 @@ export default function Home() {
     setGroups([...groups, newGroup]);
   };
 
-  const handleAddItem = (fixture, groupId) => {
-    const newItem = {
+  const handleAddItem = (fixture: any, groupId: string | null) => {
+    const newItem: Item = {
       ...fixture,
       x: 100,
       y: 100,
@@ -204,15 +226,15 @@ export default function Home() {
     setItems([...items, newItem]);
   };
 
-  const handleDrop = (fixture, position, target) => {
-    let connectedTo = null;
+  const handleDrop = (fixture: any, position: { x: number; y: number }, target: any) => {
+    let connectedTo: string | null = null;
     // Descobre se drop foi sobre uma vara
     let node = target;
     try {
       while (node && (!node.attrs || !node.attrs.name) && node.getParent) {
         node = node.getParent();
       }
-    } catch (_) {}
+    } catch (e) {}
     if (node && node.attrs && node.attrs.name === 'vara') {
       connectedTo = node.attrs.id; // uid da vara
     }
@@ -229,7 +251,7 @@ export default function Home() {
       }
     }
 
-    const newItem = {
+    const newItem: Item = {
       ...fixture,
       x,
       y,
@@ -242,11 +264,12 @@ export default function Home() {
       channels: channelsFrom(fixture.defaultMode),
       number: fixture.id === 'vara' ? null : getNextFixtureNumber(),
       connectedTo,
+      groupId: null,
     };
     setItems([...items, newItem]);
   };
 
-  const handleDragMove = (uid, x, y) => {
+  const handleDragMove = (uid: string, x: number, y: number) => {
     const newItems = [...items];
     const itemIndex = newItems.findIndex((i) => i.uid === uid);
     if (itemIndex === -1) return;
@@ -289,9 +312,10 @@ export default function Home() {
     setItems(newItems);
   };
 
-  const handleDragEnd = (uid, x, y) => {
+  const handleDragEnd = (uid: string, x: number, y: number) => {
     const newItems = [...items];
     const item = newItems.find((i) => i.uid === uid);
+    if (!item) return;
     const itemIndex = newItems.findIndex((i) => i.uid === uid);
     const oldX = item.x;
     const oldY = item.y;
@@ -315,16 +339,16 @@ export default function Home() {
     setItems(newItems);
   };
 
-  const handleSelectItem = (uid) => {
+  const handleSelectItem = (uid: string | null) => {
     if (!uid) {
       setSelectedItem(null);
       return;
     }
     const item = items.find((item) => item.uid === uid);
-    setSelectedItem(item);
+    setSelectedItem(item || null);
   };
 
-  const handleUpdateItem = (uid, properties) => {
+  const handleUpdateItem = (uid: string, properties: Partial<Item>) => {
     // Detect rotation change on a vara to re-snap connected fixtures
     const current = items.find((i) => i.uid === uid);
     const rotationChanged = current && current.id === 'vara' && properties.rotation !== undefined && properties.rotation !== current.rotation;
@@ -333,13 +357,15 @@ export default function Home() {
 
     if (rotationChanged) {
       const vara = updated.find((i) => i.uid === uid);
-      updated = updated.map((i) => {
-        if (i.connectedTo === uid) {
-          const snapped = snapOnVara(vara, { x: i.x, y: i.y });
-          return { ...i, x: snapped.x, y: snapped.y };
-        }
-        return i;
-      });
+      if (vara) {
+        updated = updated.map((i) => {
+          if (i.connectedTo === uid) {
+            const snapped = snapOnVara(vara, { x: i.x, y: i.y });
+            return { ...i, x: snapped.x, y: snapped.y };
+          }
+          return i;
+        });
+      }
     }
 
     setItems(updated);
@@ -376,7 +402,7 @@ export default function Home() {
   };
 
   const handleAutoPatch = () => {
-    const nextAddr = new Map();
+    const nextAddr = new Map<number, number>();
     const newItems = items.map((item) => {
       if (item.id === 'vara') return item;
 
@@ -384,13 +410,16 @@ export default function Home() {
       if (!nextAddr.has(u)) nextAddr.set(u, 1);
 
       let addr = nextAddr.get(u);
+      if (!addr) addr = 1;
       const need = Math.max(1, item.channels || 1);
 
       if (addr + need - 1 > 512) {
         let nu = u + 1;
         if (!nextAddr.has(nu)) nextAddr.set(nu, 1);
         addr = nextAddr.get(nu);
-        item.universe = nu;
+        if (addr) {
+          item.universe = nu;
+        }
       }
 
       item.address = addr;
@@ -409,7 +438,7 @@ export default function Home() {
     a.click();
   };
 
-  const handleImportJSON = (data) => {
+  const handleImportJSON = (data: any) => {
     setItems(data.items || []);
     setTitle(data.title || 'Meu Espetáculo');
     setGroups(data.groups || []);
@@ -442,9 +471,9 @@ export default function Home() {
     a.click();
   };
 
-    const exportImage = (mimeType, extension, output = 'download') => {
-    return new Promise((resolve, reject) => {
-      const stage = stageRef.current;
+    const exportImage = (mimeType: string, extension: string, output = 'download') => {
+    return new Promise<string>((resolve, reject) => {
+      const stage = stageRef.current as any;
       const pixelRatio = 3;
       const stageDataURL = stage.toDataURL({ pixelRatio });
 
@@ -456,6 +485,7 @@ export default function Home() {
 
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) return;
 
       const stageImage = new window.Image();
       stageImage.onload = () => {
@@ -491,7 +521,7 @@ export default function Home() {
             const iconImage = new window.Image();
             iconImage.onload = () => resolve({ iconImage, fixture });
             iconImage.onerror = reject;
-            const iconUrl = ICONS[fixture.icon];
+            const iconUrl = ICONS[fixture.icon as keyof typeof ICONS];
             if (iconUrl.startsWith('<')) {
               iconImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(iconUrl)}`;
             } else {
@@ -500,8 +530,8 @@ export default function Home() {
           });
         });
 
-        Promise.all(iconPromises).then(loadedIcons => {
-          loadedIcons.forEach(({ iconImage, fixture }, index) => {
+        Promise.all(iconPromises).then((loadedIcons: any) => {
+          loadedIcons.forEach(({ iconImage, fixture }: any, index: number) => {
             const columnIndex = Math.floor(index / itemsPerColumn);
             const rowIndex = index % itemsPerColumn;
             const xPos = (10 + columnIndex * columnWidth) * pixelRatio;
@@ -562,8 +592,9 @@ export default function Home() {
     const mapDataURL = await exportImage('image/png', 'png', 'dataURL');
 
     const win = window.open('', '_blank');
+    if (!win) return;
     const eq = equipmentSummary();
-    const patch = [...items.filter((i) => i.id !== 'vara')].sort((a, b) => a.number - b.number);
+    const patch = [...items.filter((i) => i.id !== 'vara')].sort((a, b) => (a.number || 0) - (b.number || 0));
     const style = '<style>body{font-family:system-ui;padding:24px;color:#111} h1{font-size:22px;margin:0 0 8px} h2{font-size:18px;margin:16px 0 8px} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px} th{background:#f3f4f6;text-align:left} img{max-width:100%}</style>';
     const eqRows = eq.map((e) => `<tr><td>${e.name}</td><td>${e.qty}</td><td>${e.power} W</td></tr>`).join('');
     const patchRows = patch
@@ -595,13 +626,15 @@ export default function Home() {
   };
 
   const equipmentSummary = () => {
-    const m = new Map();
+    const m = new Map<string, { qty: number; power: number }>();
     for (const i of items) {
       if (i.id === 'vara') continue;
       if (!m.has(i.name)) m.set(i.name, { qty: 0, power: 0 });
       const t = m.get(i.name);
-      t.qty++;
-      t.power += i.powerW || 0;
+      if (t) {
+        t.qty++;
+        t.power += i.powerW || 0;
+      }
     }
     return Array.from(m, ([name, v]) => ({ name, qty: v.qty, power: v.power })).sort((a, b) => a.name.localeCompare(b.name));
   };
@@ -640,7 +673,6 @@ export default function Home() {
           ref={stageRef}
           items={items}
           title={title}
-          groups={groups}
           scale={stageScale}
           onScaleChange={setStageScale}
           onDragEnd={handleDragEnd}
