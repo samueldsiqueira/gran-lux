@@ -1,12 +1,12 @@
 :root{--ink:#0f172a;--mut:#475569;--line:#e5e7eb;--bg:#f1f5f9;--card:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:#f8fafc;color:var(--ink);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;flex-direction:column;height:100vh}
-.top{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:#ffffffcc;backdrop-filter:saturate(1.1) blur(6px)}
+body{margin:0;background:#f8fafc;color:var(--ink);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:#ffffffcc;backdrop-filter:saturate(1.1) blur(6px);flex-wrap:wrap}
 .brand{font-weight:800}
-.btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer}
+.btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer;white-space:nowrap;font-size:14px}
 .btn:hover{background:#f8fafc}
-.wrap{display:grid;grid-template-columns:300px 1fr 320px;gap:10px;padding:10px;flex:1;min-height:0}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.wrap{display:grid;grid-template-columns:300px 1fr 320px;gap:10px;padding:10px;flex:1;min-height:0;overflow:hidden}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:auto}
 .pad{padding:12px}
 .title{font-weight:700;color:var(--ink);font-size:13px;margin-bottom:8px}
 .muted{color:var(--mut)}
@@ -24,3 +24,109 @@ th{background:#f8fafc;text-align:left}
 .pill{border:1px solid var(--line);border-radius:999px;padding:4px 8px}
 .tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .sep{height:1px;background:var(--line);margin:8px 0}
+
+/* Mobile menu toggle */
+.mobile-menu-btn{display:none;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;font-size:18px}
+.sidebar{transition:transform 0.3s ease}
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .wrap{grid-template-columns:280px 1fr 280px;gap:8px;padding:8px}
+  .card{font-size:13px}
+  .btn{padding:6px 10px;font-size:13px}
+  .list{grid-template-columns:1fr}
+}
+
+/* Mobile landscape (up to 768px) */
+@media (max-width: 768px) {
+  body{font-size:13px}
+  .top{padding:8px;gap:6px}
+  .brand{font-size:14px}
+  .btn{padding:6px 10px;font-size:12px}
+  
+  .mobile-menu-btn{display:block}
+  
+  .wrap{
+    grid-template-columns:1fr;
+    padding:8px;
+    gap:8px;
+    position:relative;
+  }
+  
+  /* Hide sidebars by default on mobile */
+  .sidebar-left,
+  .sidebar-right{
+    position:fixed;
+    top:60px;
+    bottom:0;
+    width:85%;
+    max-width:320px;
+    z-index:100;
+    background:#fff;
+    box-shadow:2px 0 8px rgba(0,0,0,0.1);
+    transform:translateX(-100%);
+    overflow-y:auto;
+  }
+  
+  .sidebar-right{
+    right:0;
+    left:auto;
+    transform:translateX(100%);
+    box-shadow:-2px 0 8px rgba(0,0,0,0.1);
+  }
+  
+  .sidebar-left.open{transform:translateX(0)}
+  .sidebar-right.open{transform:translateX(0)}
+  
+  /* Backdrop */
+  .mobile-backdrop{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(0,0,0,0.5);
+    z-index:99;
+  }
+  
+  .mobile-backdrop.show{display:block}
+  
+  .list{grid-template-columns:1fr}
+  .row{grid-template-columns:100px 1fr;gap:6px}
+}
+
+/* Mobile portrait (up to 480px) */
+@media (max-width: 480px) {
+  .top{flex-wrap:wrap}
+  .btn{font-size:11px;padding:5px 8px}
+  .wrap{padding:4px;gap:4px}
+  .card{border-radius:12px}
+  .pad{padding:8px}
+  .title{font-size:12px}
+  .list{gap:6px}
+  .item{padding:6px;font-size:12px}
+  .row{grid-template-columns:80px 1fr;gap:4px;margin-bottom:6px;font-size:12px}
+}
+
+/* Touch-friendly buttons */
+@media (hover: none) and (pointer: coarse) {
+  .btn,.item{min-height:44px;display:flex;align-items:center;justify-content:center}
+}
+
+/* Hide mobile controls on desktop */
+@media (min-width: 769px) {
+  .mobile-menu-controls{display:none !important}
+  .mobile-backdrop{display:none !important}
+}
+
+/* Show mobile controls only on mobile */
+.mobile-menu-controls{
+  display:none;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-controls{
+    display:flex !important;
+  }
+}

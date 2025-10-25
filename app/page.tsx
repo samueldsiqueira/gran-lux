@@ -28,6 +28,8 @@ export default function Home() {
   const [title, setTitle] = useState('Meu Espetáculo');
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
   // Snap/geometry constants
   const ICON_SIZE = 26;
@@ -646,17 +648,36 @@ export default function Home() {
         onExportJPEG={handleExportJPEG}
         onPrintRider={handlePrintRider}
       />
+      
+      {/* Mobile menu buttons */}
+      <div style={{ display: 'flex', gap: '8px', padding: '8px', borderTop: '1px solid var(--line)', background: '#fff' }} className="mobile-menu-controls">
+        <button className="mobile-menu-btn" onClick={() => {setLeftSidebarOpen(!leftSidebarOpen); setRightSidebarOpen(false);}}>
+          📚 Biblioteca
+        </button>
+        <button className="mobile-menu-btn" onClick={() => {setRightSidebarOpen(!rightSidebarOpen); setLeftSidebarOpen(false);}}>
+          ⚙️ Propriedades
+        </button>
+      </div>
+
+      {/* Mobile backdrop */}
+      <div 
+        className={`mobile-backdrop ${(leftSidebarOpen || rightSidebarOpen) ? 'show' : ''}`}
+        onClick={() => {setLeftSidebarOpen(false); setRightSidebarOpen(false);}}
+      />
+
       <div className="wrap">
-        <Library
-          onAddItem={handleAddItem}
-          onRemoveSelected={handleRemoveSelected}
-          onAutoPatch={handleAutoPatch}
-          onSizeChange={handleSizeChange}
-          onAddGroup={handleAddGroup}
-          groups={groups}
-          selectedGroup={selectedGroup}
-          setSelectedGroup={setSelectedGroup}
-        />
+        <div className={`sidebar sidebar-left ${leftSidebarOpen ? 'open' : ''}`}>
+          <Library
+            onAddItem={handleAddItem}
+            onRemoveSelected={handleRemoveSelected}
+            onAutoPatch={handleAutoPatch}
+            onSizeChange={handleSizeChange}
+            onAddGroup={handleAddGroup}
+            groups={groups}
+            selectedGroup={selectedGroup}
+            setSelectedGroup={setSelectedGroup}
+          />
+        </div>
         <Stage
           ref={stageRef}
           items={items}
@@ -672,13 +693,15 @@ export default function Home() {
           height={stageSize.height}
           onDragMove={handleDragMove}
         />
-        <Properties
-          selectedItem={selectedItem}
-          onUpdateItem={handleUpdateItem}
-          onSendToBack={handleSendToBack}
-          groups={groups}
-          onApplyMarkerToGroup={handleApplyMarkerToGroup}
-        />
+        <div className={`sidebar sidebar-right ${rightSidebarOpen ? 'open' : ''}`}>
+          <Properties
+            selectedItem={selectedItem}
+            onUpdateItem={handleUpdateItem}
+            onSendToBack={handleSendToBack}
+            groups={groups}
+            onApplyMarkerToGroup={handleApplyMarkerToGroup}
+          />
+        </div>
       </div>
     </>
   );
