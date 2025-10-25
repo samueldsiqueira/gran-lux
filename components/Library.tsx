@@ -60,7 +60,7 @@ export function Library({
     if (!draggingFixture) return;
     const touch = e.touches[0];
     setTouchDragPosition({ x: touch.clientX, y: touch.clientY });
-    e.preventDefault();
+    // Remove e.preventDefault() - React's onTouchMove is passive by default
     e.stopPropagation();
   };
 
@@ -74,38 +74,40 @@ export function Library({
     
     console.log('Drop position:', x, y);
     
-    // Check if dropped on stage canvas
-    const stageCanvas = document.querySelector('canvas');
-    const element = document.elementFromPoint(x, y);
+    // IMPORTANT: Hide preview temporarily to get element behind it
+    setTouchDragPosition(null); // This removes the preview from DOM
     
-    console.log('Element at point:', element?.tagName);
-    console.log('Stage canvas found:', !!stageCanvas);
-    
-    // More flexible check - if canvas exists or if element is canvas
-    const isOnStage = (stageCanvas && (element === stageCanvas || stageCanvas.contains(element as Node))) ||
-                     element?.tagName === 'CANVAS';
-    
-    console.log('Is on stage:', isOnStage);
-    
-    if (isOnStage) {
-      console.log('Dispatching fixtureDropped event');
-      // Trigger add item at the touch position
-      const event = new CustomEvent('fixtureDropped', {
-        detail: {
-          fixture: draggingFixture,
-          x: x,
-          y: y
-        }
-      });
-      window.dispatchEvent(event);
-    } else {
-      // If not dropped on stage, just add to center as fallback
-      console.log('Not on stage, adding to center');
-      onAddItem(draggingFixture, selectedGroup);
-    }
-    
-    setDraggingFixture(null);
-    setTouchDragPosition(null);
+    // Small delay to let DOM update
+    setTimeout(() => {
+      const element = document.elementFromPoint(x, y);
+      console.log('Element at point:', element?.tagName, element?.className);
+      
+      // Check if it's canvas or inside canvas container
+      const stageCanvas = document.querySelector('canvas');
+      console.log('Stage canvas found:', !!stageCanvas);
+      
+      const isOnStage = element?.tagName === 'CANVAS' || 
+                       (stageCanvas && element && stageCanvas.parentElement?.contains(element));
+      
+      console.log('Is on stage:', isOnStage);
+      
+      if (isOnStage) {
+        console.log('Dispatching fixtureDropped event');
+        const event = new CustomEvent('fixtureDropped', {
+          detail: {
+            fixture: draggingFixture,
+            x: x,
+            y: y
+          }
+        });
+        window.dispatchEvent(event);
+      } else {
+        console.log('Not on stage, adding to center');
+        onAddItem(draggingFixture, selectedGroup);
+      }
+      
+      setDraggingFixture(null);
+    }, 10); // 10ms delay for DOM to update
   };
   const handleDragStart = (e: React.DragEvent, fixture: Fixture) => {
     e.dataTransfer.setData("application/json", JSON.stringify(fixture));
