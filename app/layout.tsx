@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import { GeistSans } from 'geist/font/sans';
@@ -23,10 +24,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
+        {/* Suppress React DevTools semver warnings - only in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <Script
+            src="/suppress-devtools-error.js"
+            strategy="beforeInteractive"
+          />
+        )}
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
