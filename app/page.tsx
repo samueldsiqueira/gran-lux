@@ -422,8 +422,10 @@ export default function Home() {
         }
       }
 
-      item.address = addr;
-      nextAddr.set(item.universe, addr + need);
+      if (addr) {
+        item.address = addr;
+      }
+      nextAddr.set(item.universe, (addr || 0) + need);
       return item;
     });
     setItems(newItems);
