@@ -562,13 +562,53 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
       >
         <KonvaStage ref={ref} width={width} height={height}>
           <Layer ref={layerRef}>
+            {/* Background - outside Group so it fills entire canvas */}
+            <Rect
+              x={0}
+              y={0}
+              width={width}
+              height={height}
+              fill="#f1f5f9"
+              listening={false}
+            />
+            
+            {/* Grid background - also outside Group */}
+            {(() => {
+              const gridBg = [];
+              for (let i = 0; i <= Math.ceil(width / GRID_SIZE); i++) {
+                const x = i * GRID_SIZE;
+                gridBg.push(
+                  <Line
+                    key={`bg-v-${i}`}
+                    points={[x, 0, x, height]}
+                    stroke="#e5e7eb"
+                    strokeWidth={0.5}
+                    listening={false}
+                  />
+                );
+              }
+              for (let i = 0; i <= Math.ceil(height / GRID_SIZE); i++) {
+                const y = i * GRID_SIZE;
+                gridBg.push(
+                  <Line
+                    key={`bg-h-${i}`}
+                    points={[0, y, width, y]}
+                    stroke="#e5e7eb"
+                    strokeWidth={0.5}
+                    listening={false}
+                  />
+                );
+              }
+              return gridBg;
+            })()}
+            
             <Group x={offset.x} y={offset.y} scaleX={scale} scaleY={scale}>
               <Rect
                 x={0}
                 y={0}
                 width={width}
                 height={height}
-                fill="#f1f5f9"
+                fill="transparent"
                 onMouseDown={() => onSelectItem(null)}
                 onTap={() => onSelectItem(null)}
               />
