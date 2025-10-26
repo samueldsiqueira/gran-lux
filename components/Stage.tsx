@@ -20,8 +20,6 @@ import Konva from 'konva';
 
 const GRID_SIZE = 25; // denser grid
 const FRONT_OF_STAGE_MARGIN = 1.2;
-const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 4;
 
 interface StageProps {
   items: ItemType[];
@@ -35,7 +33,6 @@ interface StageProps {
   height: number;
   onDragMove: (uid: string, x: number, y: number) => void;
   scale?: number;
-  onScaleChange?: (scale: number) => void;
 }
 
 const KonvaReactIcon = ({ IconComponent, width, height, stroke, strokeWidth, isSelected }: {
@@ -106,7 +103,8 @@ const FixtureImage = ({
   isSelected, 
   onTransformEnd, 
   shapeRef, 
-  onDragMove 
+  onDragMove,
+  isDraggingItemRef
 }: {
   item: ItemType;
   onDragEnd: (uid: string, x: number, y: number) => void;
@@ -115,8 +113,14 @@ const FixtureImage = ({
   onTransformEnd: (uid: string, updates: { x: number; y: number; rotation: number; scaleX: number; scaleY: number }) => void;
   shapeRef: React.RefObject<any>;
   onDragMove: (uid: string, x: number, y: number) => void;
+  isDraggingItemRef: React.MutableRefObject<boolean>;
 }) => {
+  const handleDragStart = () => {
+    isDraggingItemRef.current = true;
+  };
+
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    isDraggingItemRef.current = false;
     onDragEnd(item.uid, e.target.x(), e.target.y());
   };
 
@@ -168,6 +172,7 @@ const FixtureImage = ({
         x={item.x}
         y={item.y}
         draggable
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
         onMouseDown={(e) => {
@@ -209,6 +214,7 @@ const FixtureImage = ({
         x={item.x}
         y={item.y}
         draggable
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
         onMouseDown={(e) => {
@@ -269,7 +275,7 @@ FixtureImage.propTypes = {
   onDragMove: PropTypes.func.isRequired,
 };
 
-const Vara = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shapeRef, ppu, onDragMove }: {
+const Vara = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shapeRef, ppu, onDragMove, isDraggingItemRef }: {
   item: ItemType;
   onDragEnd: (uid: string, x: number, y: number) => void;
   onSelectItem: (uid: string | null) => void;
@@ -278,8 +284,14 @@ const Vara = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shape
   shapeRef: React.RefObject<any>;
   ppu: number;
   onDragMove: (uid: string, x: number, y: number) => void;
+  isDraggingItemRef: React.MutableRefObject<boolean>;
 }) => {
+  const handleDragStart = () => {
+    isDraggingItemRef.current = true;
+  };
+
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    isDraggingItemRef.current = false;
     onDragEnd(item.uid, e.target.x(), e.target.y());
   };
 
@@ -313,6 +325,7 @@ const Vara = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shape
       height={height}
       fill="black"
       draggable
+      onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onMouseDown={(e) => {
@@ -346,7 +359,7 @@ Vara.propTypes = {
   onDragMove: PropTypes.func.isRequired,
 };
 
-const Item = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shapeRef, ppu, onDragMove }: {
+const Item = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shapeRef, ppu, onDragMove, isDraggingItemRef }: {
   item: ItemType;
   onDragEnd: (uid: string, x: number, y: number) => void;
   onSelectItem: (uid: string | null) => void;
@@ -355,6 +368,7 @@ const Item = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shape
   shapeRef: React.RefObject<any>;
   ppu: number;
   onDragMove: (uid: string, x: number, y: number) => void;
+  isDraggingItemRef: React.MutableRefObject<boolean>;
 }) => {
   if (item.id === "vara") {
     return (
@@ -367,6 +381,7 @@ const Item = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shape
         shapeRef={shapeRef}
         ppu={ppu}
         onDragMove={onDragMove}
+        isDraggingItemRef={isDraggingItemRef}
       />
     );
   }
@@ -379,6 +394,7 @@ const Item = ({ item, onDragEnd, onSelectItem, isSelected, onTransformEnd, shape
       onTransformEnd={onTransformEnd}
       shapeRef={shapeRef}
       onDragMove={onDragMove}
+      isDraggingItemRef={isDraggingItemRef}
     />
   );
 };
@@ -409,7 +425,6 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
       height,
       onDragMove,
       scale = 1,
-      onScaleChange,
     },
     ref,
   ) => {
@@ -420,14 +435,20 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
     const [offset, setOffset] = React.useState({ x: 0, y: 0 });
     const isPanningRef = React.useRef(false);
     const isSpacePressedRef = React.useRef(false);
+    const isDraggingItemRef = React.useRef(false);
     const lastClientRef = React.useRef<{x:number;y:number}|null>(null);
 
     React.useEffect(() => {
       const onKeyDown = (e: KeyboardEvent) => {
-        if (e.code === 'Space') isSpacePressedRef.current = true;
+        if (e.code === 'Space') {
+          isSpacePressedRef.current = true;
+          e.preventDefault();
+        }
       };
       const onKeyUp = (e: KeyboardEvent) => {
-        if (e.code === 'Space') isSpacePressedRef.current = false;
+        if (e.code === 'Space') {
+          isSpacePressedRef.current = false;
+        }
       };
       window.addEventListener('keydown', onKeyDown);
       window.addEventListener('keyup', onKeyUp);
@@ -437,31 +458,39 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
       };
     }, []);
 
-    const ppu = width / 12;
+    // Center the stage on mount and when size changes
+    React.useEffect(() => {
+      // Calculate stage dimensions
+      const ppu = width / 12;
+      const stageWidth = 7.72 * ppu;
+      const stageHeight = 4.72 * ppu;
+      const frontHeight = 1.5 * ppu;
+      
+      // Calculate position to center the stage in the canvas
+      const stageX = (width - stageWidth) / 2;
+      const stageY = (height - stageHeight) / 2 - (frontHeight) / 2 + 40;
+      const frontOfStageY = stageY + stageHeight + FRONT_OF_STAGE_MARGIN * ppu;
+      
+      // Calculate the bounding box of all elements (stage + front)
+      const totalTop = stageY - 40; // Include title
+      const totalBottom = frontOfStageY + frontHeight;
+      const totalHeight = totalBottom - totalTop;
+      
+      // Calculate the center of all content
+      const contentCenterX = stageX + stageWidth / 2;
+      const contentCenterY = totalTop + totalHeight / 2;
+      
+      const canvasCenterX = width / 2;
+      const canvasCenterY = height / 2;
+      
+      // Calculate offset to center all content
+      const offsetX = canvasCenterX - contentCenterX * scale;
+      const offsetY = canvasCenterY - contentCenterY * scale;
+      
+      setOffset({ x: offsetX, y: offsetY });
+    }, [width, height, scale]);
 
-    const grid = [];
-    for (let i = 0; i <= Math.ceil(width / GRID_SIZE); i++) {
-      const x = i * GRID_SIZE;
-      grid.push(
-        <Line
-          key={`v-${i}`}
-          points={[x, 0, x, height]}
-          stroke="#e5e7eb"
-          strokeWidth={1}
-        />,
-      );
-    }
-    for (let i = 0; i <= Math.ceil(height / GRID_SIZE); i++) {
-      const y = i * GRID_SIZE;
-      grid.push(
-        <Line
-          key={`h-${i}`}
-          points={[0, y, width, y]}
-          stroke="#e5e7eb"
-          strokeWidth={1}
-        />,
-      );
-    }
+    const ppu = width / 12;
 
     React.useEffect(() => {
       if (selectedItem && trRef.current) {
@@ -476,14 +505,8 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
       }
     }, [selectedItem]);
 
-    const handleTransformEnd = (node: any) => {
-      onUpdateItem(node.id(), {
-        x: node.x(),
-        y: node.y(),
-        rotation: node.rotation(),
-        scaleX: node.scaleX(),
-        scaleY: node.scaleY(),
-      });
+    const handleTransformEnd = (uid: string, updates: { x: number; y: number; rotation: number; scaleX: number; scaleY: number }) => {
+      onUpdateItem(uid, updates);
     };
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -520,17 +543,25 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
 
     return (
       <div
-        className="card pad"
+        className="card"
         ref={containerRef}
-        style={{ width: width, height: height, margin: "auto" }}
+        style={{ 
+          cursor: isPanningRef.current ? 'grabbing' : (isSpacePressedRef.current ? 'grab' : 'default'),
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onContextMenu={(e) => e.preventDefault()}
         onMouseDown={(e) => {
-          // Right or middle button always pans; Space+Left also pans
-          if (e.button === 1 || e.button === 2 || (e.button === 0 && isSpacePressedRef.current)) {
+          // Space+Left click or Right/Middle button to pan
+          if ((e.button === 0 && isSpacePressedRef.current) || e.button === 1 || e.button === 2) {
             isPanningRef.current = true;
             lastClientRef.current = { x: e.clientX, y: e.clientY };
+            e.preventDefault();
           }
         }}
         onMouseMove={(e) => {
@@ -543,6 +574,9 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
         onMouseUp={() => { isPanningRef.current = false; lastClientRef.current = null; }}
         onMouseLeave={() => { isPanningRef.current = false; lastClientRef.current = null; }}
         onTouchStart={(e) => {
+          // Don't pan if we're dragging an item
+          if (isDraggingItemRef.current) return;
+          
           // Only pan with 1 finger on background (not on items)
           if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -551,6 +585,9 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
           }
         }}
         onTouchMove={(e) => {
+          // Don't pan if we're dragging an item
+          if (isDraggingItemRef.current) return;
+          
           if (!isPanningRef.current || !lastClientRef.current) return;
           if (e.touches.length !== 1) return; // Only single touch pan
           
@@ -563,24 +600,6 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
         onTouchEnd={() => { 
           isPanningRef.current = false; 
           lastClientRef.current = null; 
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-          const intensity = e.ctrlKey || e.metaKey ? 1.15 : 1.07;
-          const factor = e.deltaY > 0 ? 1 / intensity : intensity;
-          const rect = containerRef.current?.getBoundingClientRect();
-          if (!rect) return;
-          const sx = e.clientX - rect.left;
-          const sy = e.clientY - rect.top;
-          const wx = (sx - offset.x) / scale;
-          const wy = (sy - offset.y) / scale;
-          let next = scale * factor;
-          next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, next));
-          // keep world point under cursor fixed
-          const nx = sx - wx * next;
-          const ny = sy - wy * next;
-          setOffset({ x: nx, y: ny });
-          if (onScaleChange) onScaleChange(next);
         }}
       >
         <KonvaStage ref={ref} width={width} height={height}>
@@ -595,7 +614,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
               listening={false}
             />
             
-            {/* Grid background - also outside Group */}
+            {/* Grid background - single grid that covers entire canvas */}
             {(() => {
               const gridBg = [];
               for (let i = 0; i <= Math.ceil(width / GRID_SIZE); i++) {
@@ -635,9 +654,6 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
                 onMouseDown={() => onSelectItem(null)}
                 onTap={() => onSelectItem(null)}
               />
-
-            {/* Grid */}
-            {grid}
 
             {/* Title - centered above the stage */}
             <Text
@@ -705,6 +721,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
                   shapeRef={shapeRefs.current[item.uid]}
                   ppu={ppu}
                   onDragMove={onDragMove}
+                  isDraggingItemRef={isDraggingItemRef}
                 />
               );
             })}
@@ -724,6 +741,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
                   shapeRef={shapeRefs.current[item.uid]}
                   ppu={ppu}
                   onDragMove={onDragMove}
+                  isDraggingItemRef={isDraggingItemRef}
                 />
               );
             })}

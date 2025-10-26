@@ -40,17 +40,48 @@ export default function Home() {
   const VARA_HEIGHT = 10; // px height of vara rectangle
 
   useEffect(() => {
-    // Set stage size based on screen width
-    const isMobile = window.innerWidth <= 768;
-    const w = isMobile ? 800 : 1200; // Smaller on mobile
-    const h = w / (16 / 9);
-    setStageSize({ width: w, height: h });
-    baseStageWidthRef.current = w;
+    // Calculate stage size based on available container space
+    const updateStageSize = () => {
+      const isMobile = window.innerWidth <= 768;
+      
+      if (isMobile) {
+        // Mobile: use screen dimensions
+        const w = Math.min(800, window.innerWidth - 20);
+        const minHeight = 40 + (7.42 * (w / 12)) + 100;
+        const h = Math.max(w / (16 / 9), minHeight);
+        setStageSize({ width: w, height: h });
+        baseStageWidthRef.current = w;
+        if (stageScale > 0.8) {
+          setStageScale(0.8);
+        }
+      } else {
+        // Desktop: calculate available space
+        // Subtract sidebars (300px + 320px) + gaps (30px) + padding (20px)
+        const availableWidth = window.innerWidth - 300 - 320 - 30 - 40;
+        const availableHeight = window.innerHeight - 120; // Subtract top bar and padding
+        
+        // Calculate minimum height needed for all content
+        // ppu = w/12, stage = 4.72*ppu, front = 1.5*ppu, margin = 1.2*ppu, title = 40
+        // Total height needed = title(40) + stage(4.72*ppu) + margin(1.2*ppu) + front(1.5*ppu) + padding
+        // = 40 + 7.42*ppu = 40 + 7.42*(w/12) = 40 + 0.618*w
+        
+        // Use larger aspect ratio to accommodate all elements
+        let w = Math.min(availableWidth, 1600); // Max 1600px
+        const minHeight = 40 + (7.42 * (w / 12)) + 100; // +100 for padding
+        let h = Math.max(w / (16 / 9), minHeight); // Use larger of 16:9 or minimum needed
+        
+        // If height exceeds available space, constrain and recalculate width
+        if (h > availableHeight) {
+          h = availableHeight;
+          w = Math.min(w, (h - 140) * 12 / 7.42); // Ensure content fits
+        }
+        
+        setStageSize({ width: w, height: h });
+        baseStageWidthRef.current = w;
+      }
+    };
     
-    // Also set initial scale for mobile
-    if (isMobile) {
-      setStageScale(0.8); // Start with smaller scale on mobile
-    }
+    updateStageSize();
 
     // Listen for touch drag events from Library component
     const handleFixtureDropped = (e: any) => {
@@ -126,17 +157,33 @@ export default function Home() {
     // Handle window resize
     const handleResize = () => {
       const isMobileNow = window.innerWidth <= 768;
-      const newW = isMobileNow ? 800 : 1200;
-      const newH = newW / (16 / 9);
       
-      // Only update if size actually changed
-      if (newW !== stageSize.width) {
-        setStageSize({ width: newW, height: newH });
-        baseStageWidthRef.current = newW;
+      if (isMobileNow) {
+        const newW = Math.min(800, window.innerWidth - 20);
+        const newH = Math.max(newW / (16 / 9), 40 + (7.42 * (newW / 12)) + 100);
+        if (newW !== stageSize.width) {
+          setStageSize({ width: newW, height: newH });
+          baseStageWidthRef.current = newW;
+          if (stageScale > 0.8) {
+            setStageScale(0.8);
+          }
+        }
+      } else {
+        const availableWidth = window.innerWidth - 300 - 320 - 30 - 40;
+        const availableHeight = window.innerHeight - 120;
         
-        // Adjust scale for mobile
-        if (isMobileNow && stageScale > 0.8) {
-          setStageScale(0.8);
+        let newW = Math.min(availableWidth, 1600);
+        const minHeight = 40 + (7.42 * (newW / 12)) + 100;
+        let newH = Math.max(newW / (16 / 9), minHeight);
+        
+        if (newH > availableHeight) {
+          newH = availableHeight;
+          newW = Math.min(newW, (newH - 140) * 12 / 7.42);
+        }
+        
+        if (newW !== stageSize.width) {
+          setStageSize({ width: newW, height: newH });
+          baseStageWidthRef.current = newW;
         }
       }
     };
@@ -151,12 +198,12 @@ export default function Home() {
   }, [items, selectedGroup, stageScale, stageSize.width]);
 
   const handleSizeChange = (newWidth: number) => {
-    const base = baseStageWidthRef.current || stageSize.width || 1200;
-    const newScale = newWidth / base;
-    setStageScale(newScale);
-    // Keep stage pixel size constante para não criar scroll
-    const newHeight = base / (16 / 9);
-    setStageSize({ width: base, height: newHeight });
+    // Calculate minimum height needed for all content
+    const minHeight = 40 + (7.42 * (newWidth / 12)) + 100;
+    const newHeight = Math.max(newWidth / (16 / 9), minHeight);
+    setStageSize({ width: newWidth, height: newHeight });
+    baseStageWidthRef.current = newWidth;
+    setStageScale(1); // Reset scale to 1
   };
 
   const getNextFixtureNumber = useCallback(() => {
@@ -789,21 +836,22 @@ export default function Home() {
             onCloseSidebar={() => setLeftSidebarOpen(false)}
           />
         </div>
-        <Stage
-          ref={stageRef}
-          items={items}
-          title={title}
-          scale={stageScale}
-          onScaleChange={setStageScale}
-          onDragEnd={handleDragEnd}
-          onSelectItem={handleSelectItem}
-          onDrop={handleDrop}
-          selectedItem={selectedItem}
-          onUpdateItem={handleUpdateItem}
-          width={stageSize.width}
-          height={stageSize.height}
-          onDragMove={handleDragMove}
-        />
+        <div className="stage-container">
+          <Stage
+            ref={stageRef}
+            items={items}
+            title={title}
+            scale={stageScale}
+            onDragEnd={handleDragEnd}
+            onSelectItem={handleSelectItem}
+            onDrop={handleDrop}
+            selectedItem={selectedItem}
+            onUpdateItem={handleUpdateItem}
+            width={stageSize.width}
+            height={stageSize.height}
+            onDragMove={handleDragMove}
+          />
+        </div>
         <div className={`sidebar sidebar-right ${rightSidebarOpen ? 'open' : ''}`}>
           <Properties
             selectedItem={selectedItem}

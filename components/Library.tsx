@@ -334,11 +334,11 @@ export function Library({
         <button className="btn" onClick={() => onSizeChange(800)}>
           800px
         </button>
-        <button className="btn" onClick={() => onSizeChange(1400)}>
+        <button className="btn" onClick={() => onSizeChange(1200)}>
           1200px
         </button>
-        <button className="btn" onClick={() => onSizeChange(2000)}>
-          2400px
+        <button className="btn" onClick={() => onSizeChange(1600)}>
+          1600px
         </button>
       </div>
       <div className="title">Grupos</div>
