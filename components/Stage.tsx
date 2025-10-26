@@ -436,6 +436,7 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
     const isPanningRef = React.useRef(false);
     const isSpacePressedRef = React.useRef(false);
     const isDraggingItemRef = React.useRef(false);
+    const isTransformingRef = React.useRef(false);
     const lastClientRef = React.useRef<{x:number;y:number}|null>(null);
 
     React.useEffect(() => {
@@ -574,8 +575,24 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
         onMouseUp={() => { isPanningRef.current = false; lastClientRef.current = null; }}
         onMouseLeave={() => { isPanningRef.current = false; lastClientRef.current = null; }}
         onTouchStart={(e) => {
-          // Don't pan if we're dragging an item
-          if (isDraggingItemRef.current) return;
+          // Don't pan if we're dragging an item or transforming
+          if (isDraggingItemRef.current || isTransformingRef.current) return;
+          
+          // Check if touch is on stage (Konva element)
+          // If user touches a transformer anchor or selected item, don't pan
+          if (ref && typeof ref !== 'function' && ref.current) {
+            const stage = ref.current;
+            const touch = e.touches[0];
+            const rect = stage.container().getBoundingClientRect();
+            const x = (touch.clientX - rect.left - offset.x) / scale;
+            const y = (touch.clientY - rect.top - offset.y) / scale;
+            const shape = stage.getIntersection({ x, y });
+            
+            // If we touched a shape (item, transformer anchor, etc), don't pan
+            if (shape) {
+              return;
+            }
+          }
           
           // Only pan with 1 finger on background (not on items)
           if (e.touches.length === 1) {
@@ -585,8 +602,8 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
           }
         }}
         onTouchMove={(e) => {
-          // Don't pan if we're dragging an item
-          if (isDraggingItemRef.current) return;
+          // Don't pan if we're dragging an item or transforming
+          if (isDraggingItemRef.current || isTransformingRef.current) return;
           
           if (!isPanningRef.current || !lastClientRef.current) return;
           if (e.touches.length !== 1) return; // Only single touch pan
@@ -761,7 +778,15 @@ const Stage = React.forwardRef<Konva.Stage, StageProps>(
               );
             })}
 
-            <Transformer ref={trRef} />
+            <Transformer 
+              ref={trRef}
+              onTransformStart={() => {
+                isTransformingRef.current = true;
+              }}
+              onTransformEnd={() => {
+                isTransformingRef.current = false;
+              }}
+            />
             </Group>
           </Layer>
         </KonvaStage>
