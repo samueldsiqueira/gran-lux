@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gran Lux / LumiRider Pro
 
-## Getting Started
+**Sistema profissional de planejamento e design de iluminação cênica**
 
-First, run the development server:
+Gran Lux (LumiRider Pro) é uma aplicação web moderna e intuitiva desenvolvida para profissionais de iluminação cênica, técnicos de palco e designers de luz. O sistema permite o planejamento completo de mapas de luz, gestão de equipamentos DMX, patch automatizado e geração de riders técnicos profissionais.
+
+## 🎯 Sobre o Projeto
+
+Esta aplicação foi desenvolvida para resolver desafios reais do setor de iluminação cênica, oferecendo:
+
+- **Interface Canvas Interativa**: Design visual de mapas de palco com drag-and-drop
+- **Gestão Completa de Fixtures**: Biblioteca extensa com PAR LED, Moving Heads, Fresnels, Elipsoidais e mais
+- **Patch DMX Inteligente**: Sistema automatizado de endereçamento DMX com suporte a múltiplos universos
+- **Cálculo de Potência**: Análise automática de consumo elétrico para dimensionamento correto
+- **Exportação Profissional**: Geração de riders técnicos, mapas em PNG/JPEG e arquivos CSV/JSON
+- **Responsividade Total**: Suporte completo para dispositivos mobile e desktop com gestos touch otimizados
+
+### Tecnologias Utilizadas
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Canvas & Visualização**: Konva.js, React-Konva
+- **UI/UX**: Tailwind CSS 4, design responsivo mobile-first
+- **Autenticação**: NextAuth.js
+- **Build & Deploy**: Vercel Platform
+
+## 👨‍💻 Sobre o Desenvolvedor
+
+**Samuel D. Siqueira** é Analista de Sistemas com sólida experiência na intersecção entre tecnologia e setores especializados. Sua trajetória profissional é marcada pela capacidade de transformar necessidades complexas em soluções tecnológicas eficientes e escaláveis.
+
+### Competências e Experiência
+
+**Experiência em Tecnologia da Saúde**
+- Desenvolvimento e análise de sistemas críticos para o setor de saúde
+- Expertise em modelagem de dados sensíveis com foco em segurança e conformidade
+- Implementação de soluções que impactam diretamente a qualidade do atendimento
+
+**Habilidades Técnicas**
+- Arquitetura de sistemas web modernos com React, Next.js e TypeScript
+- Desenvolvimento full-stack com foco em experiência do usuário
+- Análise de requisitos e tradução de necessidades de negócio em funcionalidades técnicas
+- Design de interfaces intuitivas para usuários não-técnicos
+- Otimização de performance e escalabilidade de aplicações
+
+**Abordagem Profissional**
+Samuel combina conhecimento técnico aprofundado com visão estratégica de negócios. Sua experiência no setor de saúde desenvolveu competências essenciais em:
+- Compreensão de processos complexos e regulamentados
+- Gestão de projetos com múltiplos stakeholders
+- Documentação técnica precisa e acessível
+- Solução de problemas com pensamento analítico
+
+Este projeto Gran Lux demonstra a capacidade de Samuel em:
+- Identificar lacunas em mercados especializados (iluminação cênica)
+- Desenvolver soluções end-to-end desde o conceito até a implementação
+- Aplicar tecnologias modernas para resolver problemas reais do setor
+- Criar experiências de usuário que simplificam workflows complexos
+
+---
+
+## 🚀 Getting Started
+
+Para executar o projeto em desenvolvimento:
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
+# ou
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no navegador para visualizar a aplicação.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📝 Recursos Adicionais
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Para mais informações sobre as tecnologias utilizadas:
 
-## Learn More
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
+- [Konva.js Documentation](https://konvajs.org/docs)
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 Licença
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Desenvolvido por Samuel D. Siqueira - Todos os direitos reservados.
